@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дзынь</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --bg: #1a1208;
+  }
+
+  body {
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', Georgia, serif;
+    overflow: hidden;
+    cursor: none;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.4;
+  }
+
+  .glow-bg {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: opacity 0.5s;
+  }
+
+  .scene {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 48px;
+  }
+
+  .title {
+    color: var(--gold);
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    font-weight: 400;
+  }
+
+  .bell-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ripple-ring {
+    position: absolute;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .btn {
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: none;
+    background: radial-gradient(circle at 35% 35%, #e8c85a, #b8902a 60%, #7a5510);
+    cursor: none;
+    position: relative;
+    box-shadow:
+      0 0 0 2px rgba(201,168,76,0.3),
+      0 8px 40px rgba(0,0,0,0.7),
+      inset 0 2px 4px rgba(255,255,255,0.2),
+      inset 0 -4px 8px rgba(0,0,0,0.4);
+    transition: transform 0.08s, box-shadow 0.08s;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn:active {
+    transform: scale(0.94) translateY(3px);
+    box-shadow:
+      0 0 0 2px rgba(201,168,76,0.2),
+      0 3px 20px rgba(0,0,0,0.8),
+      inset 0 2px 4px rgba(255,255,255,0.15),
+      inset 0 -2px 4px rgba(0,0,0,0.5);
+  }
+
+  .bell-svg {
+    width: 64px; height: 64px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+
+  .btn.ringing .bell-svg {
+    animation: bellShake 0.5s ease-out;
+  }
+
+  @keyframes bellShake {
+    0%   { transform: rotate(0deg); }
+    15%  { transform: rotate(-18deg); }
+    35%  { transform: rotate(16deg); }
+    55%  { transform: rotate(-12deg); }
+    75%  { transform: rotate(8deg); }
+    90%  { transform: rotate(-4deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  @keyframes rippleOut {
+    0%   { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(3); opacity: 0; }
+  }
+
+  .label {
+    color: var(--gold-light);
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    letter-spacing: 0.1em;
+    opacity: 0;
+    pointer-events: none;
+    text-shadow: 0 0 30px rgba(201,168,76,0.6);
+    font-style: italic;
+    min-height: 1.2em;
+    text-align: center;
+  }
+
+  .label.show {
+    animation: fadeLabel 1.5s ease-out forwards;
+  }
+
+  @keyframes fadeLabel {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    30%  { opacity: 1; transform: translateY(-8px) scale(1.04); }
+    100% { opacity: 0; transform: translateY(-24px) scale(0.95); }
+  }
+
+  /* ── Settings button ── */
+  .settings-btn {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.3);
+    background: rgba(26,18,8,0.85);
+    cursor: none;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(201,168,76,0.45);
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    outline: none;
+  }
+  .settings-btn:hover {
+    border-color: rgba(201,168,76,0.65);
+    color: var(--gold);
+    background: rgba(201,168,76,0.07);
+  }
+  .settings-btn svg { width: 15px; height: 15px; }
+  .settings-btn.spinning svg { animation: spinGear 0.45s ease-out forwards; }
+  @keyframes spinGear { to { transform: rotate(90deg); } }
+
+  /* ── Settings panel ── */
+  .settings-panel {
+    position: fixed;
+    bottom: 74px; right: 28px;
+    width: 252px;
+    background: rgba(14, 9, 2, 0.97);
+    border: 1px solid rgba(201,168,76,0.18);
+    border-radius: 14px;
+    padding: 18px 16px;
+    z-index: 200;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.85), 0 0 0 1px rgba(201,168,76,0.04);
+    transform-origin: bottom right;
+    transform: scale(0.82) translateY(10px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease;
+  }
+  .settings-panel.open {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .settings-panel h3 {
+    color: rgba(201,168,76,0.4);
+    font-size: 0.6rem;
+    letter-spacing: 0.38em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 400;
+    padding-left: 2px;
+  }
+
+  .sound-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .sound-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 8px;
+    border-radius: 8px;
+    cursor: none;
+    border: 1px solid transparent;
+    transition: background 0.13s, border-color 0.13s;
+  }
+  .sound-item:hover { background: rgba(201,168,76,0.06); }
+  .sound-item.active {
+    background: rgba(201,168,76,0.09);
+    border-color: rgba(201,168,76,0.22);
+  }
+
+  .sound-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(201,168,76,0.35);
+    flex-shrink: 0;
+    transition: background 0.13s, border-color 0.13s, box-shadow 0.13s;
+  }
+  .sound-item.active .sound-dot {
+    background: var(--gold);
+    border-color: var(--gold);
+    box-shadow: 0 0 7px rgba(201,168,76,0.55);
+  }
+
+  .sound-info { flex: 1; min-width: 0; }
+  .sound-name {
+    color: rgba(240,208,128,0.7);
+    font-size: 0.8rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sound-item.active .sound-name { color: var(--gold-light); }
+  .sound-tag {
+    font-size: 0.6rem;
+    color: rgba(201,168,76,0.3);
+    letter-spacing: 0.08em;
+    font-style: italic;
+  }
+
+  .preview-btn {
+    background: none;
+    border: none;
+    cursor: none;
+    color: rgba(201,168,76,0.25);
+    padding: 3px;
+    display: flex; align-items: center; flex-shrink: 0;
+    border-radius: 4px;
+    transition: color 0.13s, background 0.13s;
+  }
+  .preview-btn:hover {
+    color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+  .preview-btn svg { width: 11px; height: 11px; }
+
+  /* ── Screaming Cat ── */
+  .cat-container {
+    position: fixed;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    pointer-events: none;
+    z-index: 50;
+  }
+  .cat-container.scream {
+    animation: catPop 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes catPop {
+    0%   { transform: translateX(-50%) translateY(100%); }
+    18%  { transform: translateX(-50%) translateY(-14px) rotate(-2deg); }
+    30%  { transform: translateX(-50%) translateY(2px) rotate(1deg); }
+    45%  { transform: translateX(-50%) translateY(-5px) rotate(0deg); }
+    58%  { transform: translateX(-50%) translateY(0px); }
+    75%  { transform: translateX(-50%) translateY(0px); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(130%); opacity: 0; }
+  }
+
+  .cat-svg {
+    width: 140px;
+    height: 150px;
+    display: block;
+  }
+
+  /* fur spikes — transform-box so origin is local */
+  .fur-spike {
+    transform-box: fill-box;
+    transform-origin: bottom center;
+  }
+  .cat-container.scream .fur-spike {
+    animation: furShake 0.13s ease-in-out infinite alternate;
+  }
+  @keyframes furShake {
+    from { transform: rotate(-6deg) scaleY(1); }
+    to   { transform: rotate(6deg) scaleY(1.15); }
+  }
+
+  /* eye pupils */
+  .eye-pupil {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .cat-container.scream .eye-pupil {
+    animation: pupilSpin 0.35s linear infinite;
+  }
+  @keyframes pupilSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* mouth shake — drawn at absolute coords, no SVG transform */
+  .cat-mouth-group {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .cat-container.scream .cat-mouth-group {
+    animation: mouthVibe 0.09s ease-in-out infinite alternate;
+  }
+  @keyframes mouthVibe {
+    from { transform: scaleX(1) scaleY(1); }
+    to   { transform: scaleX(1.07) scaleY(0.93); }
+  }
+
+  /* scream text */
+  .cat-scream-text {
+    position: absolute;
+    top: -34px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+    font-style: italic;
+    color: #ff9944;
+    white-space: nowrap;
+    text-shadow: 0 0 12px rgba(255,100,0,0.8);
+    letter-spacing: 0.05em;
+    opacity: 0;
+  }
+  .cat-container.scream .cat-scream-text {
+    animation: textPop 2.2s ease-out forwards;
+  }
+  @keyframes textPop {
+    0%   { opacity: 0; transform: translateX(-50%) scale(0.7) translateY(8px); }
+    20%  { opacity: 1; transform: translateX(-50%) scale(1.08) translateY(0); }
+    55%  { opacity: 1; transform: translateX(-50%) scale(1); }
+    80%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+
+  /* ── Cursor ── */
+  .cursor {
+    position: fixed;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: var(--gold);
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.14s, height 0.14s, background 0.14s;
+    mix-blend-mode: screen;
+  }
+  .cursor.big {
+    width: 46px; height: 46px;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid var(--gold);
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-bg" id="glowBg"></div>
+<div class="cursor" id="cursor"></div>
+
+<div class="scene">
+  <div class="title">Колокольчик</div>
+  <div class="bell-wrap">
+    <div class="ripple-ring" id="ring1"></div>
+    <div class="ripple-ring" id="ring2"></div>
+    <div class="ripple-ring" id="ring3"></div>
+    <button class="btn" id="bellBtn" aria-label="Дзынь">
+      <svg class="bell-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M32 8 C20 8 14 18 14 30 L14 42 Q14 44 12 44 L10 44 L10 48 L54 48 L54 44 L52 44 Q50 44 50 42 L50 30 C50 18 44 8 32 8 Z"
+          fill="url(#bg)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+        <ellipse cx="32" cy="52" rx="5" ry="3.5" fill="#6a4010" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/>
+        <path d="M22 18 Q24 14 30 13" stroke="rgba(255,255,255,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="bg" x1="14" y1="8" x2="54" y2="52" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#f5d060"/>
+            <stop offset="50%" stop-color="#c9a84c"/>
+            <stop offset="100%" stop-color="#7a5510"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </button>
+  </div>
+  <div class="label" id="label">Дзынь!</div>
+</div>
+
+<!-- Screaming Cat -->
+<div class="cat-container" id="catContainer">
+  <div class="cat-scream-text" id="catText">А-А-А-А-А!!!</div>
+  <svg class="cat-svg" viewBox="0 0 140 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- TAIL (behind body, right side) -->
+    <path d="M88 140 Q118 132 120 110 Q122 90 106 84"
+          stroke="#c4722a" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <path d="M88 140 Q118 132 120 110 Q122 90 106 84"
+          stroke="#e8953f" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.55"/>
+
+    <!-- BODY -->
+    <ellipse cx="68" cy="118" rx="36" ry="28" fill="#e8953f"/>
+    <!-- belly -->
+    <ellipse cx="68" cy="120" rx="22" ry="19" fill="#f7c97a" opacity="0.85"/>
+
+    <!-- HEAD -->
+    <ellipse cx="68" cy="68" rx="34" ry="32" fill="#e8953f"/>
+    <!-- face pale patch -->
+    <ellipse cx="68" cy="72" rx="22" ry="20" fill="#f7c97a" opacity="0.55"/>
+
+    <!-- EAR LEFT (drawn before spikes so spikes overlap) -->
+    <polygon points="34,54 26,24 52,46" fill="#e8953f"/>
+    <polygon points="37,52 31,30 48,45" fill="#f7a0a0" opacity="0.75"/>
+
+    <!-- EAR RIGHT -->
+    <polygon points="102,54 114,24 88,46" fill="#e8953f"/>
+    <polygon points="99,52 109,30 92,45" fill="#f7a0a0" opacity="0.75"/>
+
+    <!-- FOREHEAD FUR SPIKES (startled) -->
+    <polygon class="fur-spike" points="50,44 46,22 56,42" fill="#c4722a"/>
+    <polygon class="fur-spike" points="64,40 62,18 70,39" fill="#c4722a"/>
+    <polygon class="fur-spike" points="78,43 82,21 86,44" fill="#c4722a"/>
+
+    <!-- FOREHEAD STRIPES -->
+    <path d="M54,54 Q57,46 60,54" stroke="#c4722a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M65,51 Q68,43 71,51" stroke="#c4722a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <path d="M76,54 Q79,46 82,54" stroke="#c4722a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+    <!-- EYE LEFT — all at absolute coords, pupil uses transform-box -->
+    <circle cx="50" cy="66" r="12" fill="white"/>
+    <circle cx="50" cy="66" r="9"  fill="#28a028"/>
+    <ellipse class="eye-pupil" cx="50" cy="66" rx="5" ry="8" fill="#111"/>
+    <circle cx="54" cy="61" r="2.5" fill="white" opacity="0.9"/>
+    <path d="M38,62 Q50,53 62,62" stroke="#c4722a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+    <!-- EYE RIGHT -->
+    <circle cx="86" cy="66" r="12" fill="white"/>
+    <circle cx="86" cy="66" r="9"  fill="#28a028"/>
+    <ellipse class="eye-pupil" cx="86" cy="66" rx="5" ry="8" fill="#111"/>
+    <circle cx="90" cy="61" r="2.5" fill="white" opacity="0.9"/>
+    <path d="M74,62 Q86,53 98,62" stroke="#c4722a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+    <!-- NOSE — absolute -->
+    <polygon points="68,80 64,76 72,76" fill="#e04070"/>
+    <ellipse cx="68" cy="77" rx="1.5" ry="1" fill="white" opacity="0.6"/>
+
+    <!-- SCREAMING MOUTH — all drawn at absolute coords, group uses transform-box -->
+    <g class="cat-mouth-group">
+      <!-- mouth dark oval -->
+      <ellipse cx="68" cy="94" rx="16" ry="13" fill="#1a0505"/>
+      <!-- throat -->
+      <ellipse cx="68" cy="95" rx="11" ry="7"  fill="#6b1020"/>
+      <!-- tongue -->
+      <ellipse cx="68" cy="99" rx="9"  ry="6"  fill="#e04060"/>
+      <ellipse cx="68" cy="97" rx="5"  ry="3"  fill="#f06880" opacity="0.7"/>
+      <!-- top teeth -->
+      <rect x="55" y="82" width="5" height="6" rx="2" fill="white"/>
+      <rect x="62" y="81" width="5" height="7" rx="2" fill="white"/>
+      <rect x="69" y="82" width="5" height="6" rx="2" fill="white"/>
+      <!-- top fangs -->
+      <polygon points="52,83 55,83 53.5,90" fill="white"/>
+      <polygon points="84,83 81,83 82.5,90" fill="white"/>
+      <!-- bottom teeth -->
+      <rect x="59" y="100" width="4" height="4" rx="1.5" fill="white"/>
+      <rect x="68" y="100" width="4" height="4" rx="1.5" fill="white"/>
+      <!-- mouth outline -->
+      <ellipse cx="68" cy="94" rx="16" ry="13" stroke="#c4722a" stroke-width="1.5" fill="none"/>
+    </g>
+
+    <!-- WHISKERS LEFT -->
+    <line x1="14" y1="76" x2="44" y2="78" stroke="#f0ddc0" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="12" y1="83" x2="43" y2="83" stroke="#f0ddc0" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="14" y1="90" x2="44" y2="87" stroke="#f0ddc0" stroke-width="1.4" stroke-linecap="round"/>
+
+    <!-- WHISKERS RIGHT -->
+    <line x1="122" y1="76" x2="92" y2="78" stroke="#f0ddc0" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="124" y1="83" x2="93" y2="83" stroke="#f0ddc0" stroke-width="1.4" stroke-linecap="round"/>
+    <line x1="122" y1="90" x2="92" y2="87" stroke="#f0ddc0" stroke-width="1.4" stroke-linecap="round"/>
+
+    <!-- PAWS -->
+    <ellipse cx="46" cy="141" rx="15" ry="9" fill="#e8953f"/>
+    <ellipse cx="90" cy="141" rx="15" ry="9" fill="#e8953f"/>
+    <line x1="40" y1="136" x2="40" y2="146" stroke="#c4722a" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="46" y1="134" x2="46" y2="147" stroke="#c4722a" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="52" y1="136" x2="52" y2="146" stroke="#c4722a" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="84" y1="136" x2="84" y2="146" stroke="#c4722a" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="90" y1="134" x2="90" y2="147" stroke="#c4722a" stroke-width="1.2" stroke-linecap="round"/>
+    <line x1="96" y1="136" x2="96" y2="146" stroke="#c4722a" stroke-width="1.2" stroke-linecap="round"/>
+
+    <!-- SHOCK LINES -->
+    <line x1="6"  y1="50" x2="18" y2="56" stroke="#ffbb44" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+    <line x1="4"  y1="66" x2="17" y2="67" stroke="#ffbb44" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+    <line x1="8"  y1="82" x2="20" y2="79" stroke="#ffbb44" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+    <line x1="130" y1="50" x2="118" y2="56" stroke="#ffbb44" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+    <line x1="132" y1="66" x2="119" y2="67" stroke="#ffbb44" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+    <line x1="128" y1="82" x2="116" y2="79" stroke="#ffbb44" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
+  </svg>
+</div>
+
+<!-- Settings -->
+<button class="settings-btn" id="settingsBtn" aria-label="Настройки">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<div class="settings-panel" id="settingsPanel">
+  <h3>Тип звука</h3>
+  <div class="sound-list" id="soundList"></div>
+</div>
+
+<script>
+// ── Audio helpers ──────────────────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx = null;
+function getCtx() {
+  if (!ctx) ctx = new AudioCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+function makeGain(vol, decay, dest) {
+  const g = getCtx().createGain();
+  const now = getCtx().currentTime;
+  g.gain.setValueAtTime(vol, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+  g.connect(dest || getCtx().destination);
+  return g;
+}
+function addOsc(freq, type, vol, decay, dest) {
+  const c = getCtx(), now = c.currentTime;
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(vol, now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+  osc.connect(g); g.connect(dest || c.destination);
+  osc.start(now); osc.stop(now + decay);
+  return osc;
+}
+function noiseClick(vol, dest) {
+  const c = getCtx(), now = c.currentTime;
+  const sz = c.sampleRate * 0.04;
+  const buf = c.createBuffer(1, sz, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < sz; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(sz*0.08));
+  const src = c.createBufferSource(); src.buffer = buf;
+  const g = c.createGain(); g.gain.value = vol;
+  src.connect(g); g.connect(dest || c.destination);
+  src.start(now);
+}
+
+// ── Sound definitions ──────────────────────────────────────────────────────
+const SOUNDS = [
+  {
+    id:'bell', name:'Колокольчик', tag:'классика', label:'Дзынь!',
+    play() {
+      const c = getCtx(), now = c.currentTime, m = c.createGain();
+      m.gain.setValueAtTime(0.7,now); m.gain.exponentialRampToValueAtTime(0.001,now+3);
+      m.connect(c.destination);
+      [[880,.6,2.5],[1480,.4,2],[2200,.25,1.5],[2640,.15,1.2],[3520,.08,.8]].forEach(([f,v,d])=>{
+        const o=c.createOscillator(),g=c.createGain();
+        o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
+        o.connect(g); g.connect(m); o.start(now); o.stop(now+d);
+      });
+      noiseClick(0.3,m);
+    }
+  },
+  {
+    id:'church', name:'Церковный', tag:'глубокий гул', label:'Бо-ом!',
+    play() {
+      const c = getCtx(), now = c.currentTime, m = c.createGain();
+      m.gain.setValueAtTime(0.85,now); m.gain.exponentialRampToValueAtTime(0.001,now+5);
+      m.connect(c.destination);
+      [[220,.7,4.5],[330,.5,4],[550,.3,3],[660,.2,2.5],[990,.1,2]].forEach(([f,v,d])=>{
+        const o=c.createOscillator(),g=c.createGain();
+        o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
+        o.connect(g); g.connect(m); o.start(now); o.stop(now+d);
+      });
+      noiseClick(0.4,m);
+    }
+  },
+  {
+    id:'triangle', name:'Треугольник', tag:'звонкий', label:'Дин!',
+    play() {
+      const c = getCtx(), now = c.currentTime, m = c.createGain();
+      m.gain.setValueAtTime(0.6,now); m.gain.exponentialRampToValueAtTime(0.001,now+2);
+      m.connect(c.destination);
+      [[2800,.5,1.8],[4200,.3,1.4],[5600,.15,1]].forEach(([f,v,d])=>{
+        const o=c.createOscillator(),g=c.createGain();
+        o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
+        o.connect(g); g.connect(m); o.start(now); o.stop(now+d);
+      });
+    }
+  },
+  {
+    id:'gong', name:'Гонг', tag:'восточный', label:'Гоо-нг!',
+    play() {
+      const c = getCtx(), now = c.currentTime, m = c.createGain();
+      m.gain.setValueAtTime(1,now); m.gain.exponentialRampToValueAtTime(0.001,now+6);
+      m.connect(c.destination);
+      [[110,.8,5],[175,.5,4.5],[260,.35,3.5],[390,.2,2.5],[520,.1,2],[780,.05,1.5]].forEach(([f,v,d])=>{
+        const o=c.createOscillator(),g=c.createGain();
+        o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
+        o.connect(g); g.connect(m); o.start(now); o.stop(now+d);
+      });
+      noiseClick(0.5,m);
+    }
+  },
+  {
+    id:'chime', name:'Чайм', tag:'мелодичный', label:'Тинь-лин!',
+    play() {
+      const c = getCtx();
+      [523,659,784,1047].forEach((freq,i)=>{
+        setTimeout(()=>{
+          const now=c.currentTime,o=c.createOscillator(),g=c.createGain();
+          o.frequency.value=freq; g.gain.setValueAtTime(0.35,now); g.gain.exponentialRampToValueAtTime(0.0001,now+1.5);
+          o.connect(g); g.connect(c.destination); o.start(now); o.stop(now+1.5);
+        },i*130);
+      });
+    }
+  },
+  {
+    id:'wind', name:'Ветер в трубках', tag:'атмосферный', label:'Шу-у-у...',
+    play() {
+      const c = getCtx();
+      const freqs=[523,587,659,698,784,880];
+      for(let i=0;i<7;i++){
+        const delay=Math.random()*700;
+        const freq=freqs[Math.floor(Math.random()*freqs.length)];
+        setTimeout(()=>{
+          const now=c.currentTime,o=c.createOscillator(),g=c.createGain();
+          o.frequency.value=freq; g.gain.setValueAtTime(0.22,now); g.gain.exponentialRampToValueAtTime(0.0001,now+1.2);
+          o.connect(g); g.connect(c.destination); o.start(now); o.stop(now+1.2);
+        },delay);
+      }
+    }
+  },
+  {
+    id:'cowbell', name:'Коровий колокол', tag:'деревенский', label:'Клонк!',
+    play() {
+      const c = getCtx(), now = c.currentTime, m = c.createGain();
+      m.gain.setValueAtTime(0.5,now); m.gain.exponentialRampToValueAtTime(0.001,now+0.55);
+      m.connect(c.destination);
+      [[540,.6,.4,'square'],[800,.4,.3,'square'],[1080,.2,.25,'square']].forEach(([f,v,d,t])=>{
+        const o=c.createOscillator(),g=c.createGain();
+        o.type=t; o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
+        o.connect(g); g.connect(m); o.start(now); o.stop(now+d);
+      });
+      noiseClick(0.5,m);
+    }
+  },
+  {
+    id:'ding', name:'Уведомление', tag:'чистый', label:'Динг!',
+    play() {
+      const c = getCtx();
+      [[1318,.6,1.0,0],[1047,.4,1.4,180]].forEach(([f,v,d,delay])=>{
+        setTimeout(()=>{
+          const now=c.currentTime,o=c.createOscillator(),g=c.createGain();
+          o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
+          o.connect(g); g.connect(c.destination); o.start(now); o.stop(now+d);
+        },delay);
+      });
+    }
+  },
+  {
+    id:'tibetan', name:'Тибетская чаша', tag:'медитация', label:'Оммм...',
+    play() {
+      const c = getCtx(), now = c.currentTime, m = c.createGain();
+      m.gain.setValueAtTime(0.6,now); m.gain.exponentialRampToValueAtTime(0.001,now+7);
+      m.connect(c.destination);
+      [[396,.5,6],[528,.3,5],[639,.2,4],[741,.1,3]].forEach(([f,v,d])=>{
+        const o=c.createOscillator(),g=c.createGain();
+        o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
+        o.connect(g); g.connect(m); o.start(now); o.stop(now+d);
+      });
+      // LFO vibrato
+      const lfo=c.createOscillator(), lfoG=c.createGain(), vib=c.createOscillator(), vibG=c.createGain();
+      lfo.frequency.value=5; lfoG.gain.value=4;
+      vib.frequency.value=396;
+      lfo.connect(lfoG); lfoG.connect(vib.frequency);
+      vibG.gain.setValueAtTime(0.15,now); vibG.gain.exponentialRampToValueAtTime(0.0001,now+7);
+      vib.connect(vibG); vibG.connect(m);
+      lfo.start(now); lfo.stop(now+7); vib.start(now); vib.stop(now+7);
+    }
+  },
+  {
+    id:'retro', name:'Ретро-звонок', tag:'механический', label:'Дрынь!',
+    play() {
+      const c = getCtx(), now = c.currentTime, dur = 0.85;
+      for(let i=0;i<18;i++){
+        const t=now+i*(dur/18);
+        const o=c.createOscillator(), g=c.createGain();
+        o.type='square';
+        o.frequency.value=i%2===0?1200:1450;
+        g.gain.setValueAtTime(0.13,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur/18);
+        o.connect(g); g.connect(c.destination);
+        o.start(t); o.stop(t+dur/18+0.01);
+      }
+    }
+  },
+];
+
+const catContainer = document.getElementById('catContainer');
+const catText = document.getElementById('catText');
+
+const CAT_SCREAMS = ['А-А-А-А-А!!!', 'МЯ-А-А-У!!!', 'МРРА-А-У!!!', 'А-А-У-У!!!', 'ААААА!!!'];
+let catTimeout = null;
+
+function triggerCat() {
+  catText.textContent = CAT_SCREAMS[Math.floor(Math.random() * CAT_SCREAMS.length)];
+  catContainer.classList.remove('scream');
+  void catContainer.offsetWidth;
+  catContainer.classList.add('scream');
+  if (catTimeout) clearTimeout(catTimeout);
+  catTimeout = setTimeout(() => catContainer.classList.remove('scream'), 2300);
+}
+
+
+let currentId = 'bell';
+let panelOpen = false;
+let labelTimeout = null;
+
+const bellBtn = document.getElementById('bellBtn');
+const labelEl = document.getElementById('label');
+const rings = [document.getElementById('ring1'),document.getElementById('ring2'),document.getElementById('ring3')];
+const cursorEl = document.getElementById('cursor');
+const glowBg = document.getElementById('glowBg');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const soundListEl = document.getElementById('soundList');
+
+// ── Build list ─────────────────────────────────────────────────────────────
+SOUNDS.forEach(s => {
+  const item = document.createElement('div');
+  item.className = 'sound-item' + (s.id === currentId ? ' active' : '');
+  item.dataset.id = s.id;
+  item.innerHTML = `
+    <div class="sound-dot"></div>
+    <div class="sound-info">
+      <div class="sound-name">${s.name}</div>
+      <div class="sound-tag">${s.tag}</div>
+    </div>
+    <button class="preview-btn" aria-label="Прослушать">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+    </button>`;
+  soundListEl.appendChild(item);
+
+  item.addEventListener('click', e => {
+    if (e.target.closest('.preview-btn')) return;
+    selectSound(s.id);
+    closePanel();
+  });
+  item.querySelector('.preview-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    s.play();
+  });
+});
+
+function selectSound(id) {
+  currentId = id;
+  document.querySelectorAll('.sound-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.id === id));
+  const s = SOUNDS.find(x => x.id === id);
+  if (s) labelEl.textContent = s.label;
+}
+
+// ── Panel ──────────────────────────────────────────────────────────────────
+function openPanel() {
+  panelOpen = true;
+  settingsPanel.classList.add('open');
+  settingsBtn.classList.add('spinning');
+  setTimeout(() => settingsBtn.classList.remove('spinning'), 450);
+}
+function closePanel() {
+  panelOpen = false;
+  settingsPanel.classList.remove('open');
+}
+
+settingsBtn.addEventListener('click', () => panelOpen ? closePanel() : openPanel());
+
+document.addEventListener('click', e => {
+  if (panelOpen && !settingsPanel.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target))
+    closePanel();
+});
+
+// ── Ring ───────────────────────────────────────────────────────────────────
+function ring() {
+  if (panelOpen) { closePanel(); return; }
+  const sound = SOUNDS.find(s => s.id === currentId) || SOUNDS[0];
+  sound.play();
+
+  bellBtn.classList.remove('ringing');
+  void bellBtn.offsetWidth;
+  bellBtn.classList.add('ringing');
+
+  labelEl.textContent = sound.label;
+  labelEl.style.animation = 'none';
+  void labelEl.offsetWidth;
+  labelEl.style.animation = '';
+  labelEl.classList.remove('show');
+  void labelEl.offsetWidth;
+  labelEl.classList.add('show');
+
+  rings.forEach((r,i) => {
+    r.style.animation = 'none';
+    setTimeout(() => { r.style.animation = `rippleOut 1.2s ease-out ${i*0.18}s forwards`; }, 10);
+  });
+
+  glowBg.style.opacity = '3';
+  setTimeout(() => glowBg.style.opacity = '1', 300);
+
+  triggerCat();
+
+  if (labelTimeout) clearTimeout(labelTimeout);
+  labelTimeout = setTimeout(() => labelEl.classList.remove('show'), 1500);
+}
+
+bellBtn.addEventListener('click', ring);
+bellBtn.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') ring(); });
+bellBtn.addEventListener('touchstart', e => { e.preventDefault(); ring(); }, { passive: false });
+
+// ── Cursor ─────────────────────────────────────────────────────────────────
+document.addEventListener('mousemove', e => {
+  cursorEl.style.left = e.clientX + 'px';
+  cursorEl.style.top = e.clientY + 'px';
+});
+bellBtn.addEventListener('mouseenter', () => cursorEl.classList.add('big'));
+bellBtn.addEventListener('mouseleave', () => cursorEl.classList.remove('big'));
+</script>
+</body>
+</html>
