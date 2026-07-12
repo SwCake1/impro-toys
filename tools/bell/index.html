@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Дзынь</title>
+<link rel="stylesheet" href="../../shared/styles.css">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
 
@@ -383,10 +384,34 @@
     background: rgba(201,168,76,0.12);
     border: 1px solid var(--gold);
   }
+
+  .tool-navigation {
+    --tool-nav-foreground: var(--gold-light);
+    --tool-nav-background: rgba(26, 18, 8, 0.82);
+    --tool-nav-border: rgba(201, 168, 76, 0.32);
+    --tool-nav-focus: var(--gold);
+    cursor: none;
+  }
+
+  @media (pointer: coarse) {
+    body,
+    .btn,
+    .settings-btn,
+    .sound-item,
+    .preview-btn,
+    .tool-navigation {
+      cursor: auto;
+    }
+
+    .cursor {
+      display: none;
+    }
+  }
 </style>
 </head>
 <body>
 
+<a class="tool-navigation" id="catalogLink" href="../../index.html">Все инструменты</a>
 <div class="glow-bg" id="glowBg"></div>
 <div class="cursor" id="cursor"></div>
 
@@ -758,6 +783,7 @@ const glowBg = document.getElementById('glowBg');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsPanel = document.getElementById('settingsPanel');
 const soundListEl = document.getElementById('soundList');
+const catalogLink = document.getElementById('catalogLink');
 
 // ── Build list ─────────────────────────────────────────────────────────────
 SOUNDS.forEach(s => {
@@ -856,6 +882,8 @@ document.addEventListener('mousemove', e => {
 });
 bellBtn.addEventListener('mouseenter', () => cursorEl.classList.add('big'));
 bellBtn.addEventListener('mouseleave', () => cursorEl.classList.remove('big'));
+catalogLink.addEventListener('mouseenter', () => cursorEl.classList.add('big'));
+catalogLink.addEventListener('mouseleave', () => cursorEl.classList.remove('big'));
 </script>
 </body>
 </html>
