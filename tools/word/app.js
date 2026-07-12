@@ -21,6 +21,69 @@
     return a;
   }
 
+  function displayWord(word) {
+    return word.charAt(0).toLocaleUpperCase("ru-RU") + word.slice(1);
+  }
+
+  function showWord(word) {
+    byId("word").textContent = displayWord(word);
+  }
+
+  function playDiceSound() {
+    var AudioContext = window.AudioContext || window.webkitAudioContext;
+    var context, buffer, data, source, filter, gain, length, i, j, now, time, hit, envelope;
+    var hits = [0, 0.055, 0.12];
+
+    if (!AudioContext) {
+      return;
+    }
+
+    try {
+      context = new AudioContext();
+      length = Math.floor(context.sampleRate * 0.2);
+      buffer = context.createBuffer(1, length, context.sampleRate);
+      data = buffer.getChannelData(0);
+
+      for (i = 0; i < length; i = i + 1) {
+        time = i / context.sampleRate;
+        envelope = 0;
+
+        for (j = 0; j < hits.length; j = j + 1) {
+          hit = time - hits[j];
+          if (hit >= 0 && hit < 0.045) {
+            envelope = Math.max(envelope, 1 - hit / 0.045);
+          }
+        }
+
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+
+      source = context.createBufferSource();
+      filter = context.createBiquadFilter();
+      gain = context.createGain();
+      now = context.currentTime;
+
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(950, now);
+      filter.Q.setValueAtTime(0.7, now);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+      source.buffer = buffer;
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(context.destination);
+      source.start(now);
+      source.stop(now + 0.2);
+
+      window.setTimeout(function () {
+        context.close();
+      }, 250);
+    } catch (error) {
+      // Звук является дополнительной обратной связью и не должен мешать генератору.
+    }
+  }
+
   function renderHistory() {
     var h = byId("history");
     var list = shown.slice(Math.max(0, shown.length - 10)).reverse();
@@ -28,18 +91,18 @@
       h.innerHTML = "";
       return;
     }
-    h.innerHTML = "Последние слова: " + list.join(", ");
+    h.textContent = "Последние слова: " + list.map(displayWord).join(", ");
   }
 
   function renderCounter() {
-    byId("counter").innerHTML = "Использовано в круге: " + shown.length + " из " + WORDS.length;
+    byId("counter").textContent = "Использовано в круге: " + shown.length + " из " + WORDS.length;
   }
 
   function resetDeck() {
     deck = shuffle(WORDS);
     shown = [];
     previous = [];
-    byId("word").innerHTML = "готов?";
+    byId("word").textContent = "Готов?";
     renderCounter();
     renderHistory();
   }
@@ -55,9 +118,10 @@
     previous.push(word);
     shown.push(word);
 
-    byId("word").innerHTML = word;
+    showWord(word);
     renderCounter();
     renderHistory();
+    playDiceSound();
   }
 
   function backWord() {
@@ -70,9 +134,10 @@
     shown.pop();
 
     var word = previous[previous.length - 1];
-    byId("word").innerHTML = word;
+    showWord(word);
     renderCounter();
     renderHistory();
+    playDiceSound();
   }
 
   function init() {
@@ -88,8 +153,6 @@
         nextWord();
       }
     }, false);
-
-    byId("status").innerHTML = "JS запущен, кнопки подключены";
   }
 
   if (document.readyState === "loading") {
@@ -98,4 +161,3 @@
     init();
   }
 }());
-
