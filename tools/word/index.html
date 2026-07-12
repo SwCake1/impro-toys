@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Генератор существительных для упражнений и сцен импровизации.">
+<title>Генератор слов — инструменты для импровизации</title>
+<link rel="stylesheet" href="../../shared/styles.css">
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #111827;
+    color: white;
+  }
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 16px 16px;
+  }
+  .box {
+    width: 100%;
+    max-width: 680px;
+    background: #1f2937;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 28px;
+    padding: 22px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    line-height: 1.08;
+  }
+  .sub {
+    color: rgba(255,255,255,.7);
+    margin: 0 0 20px;
+    line-height: 1.4;
+  }
+  .word {
+    min-height: 190px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 18px;
+    font-size: clamp(46px, 11vw, 90px);
+    font-weight: 850;
+    letter-spacing: -0.06em;
+    margin-bottom: 16px;
+  }
+  button {
+    width: 100%;
+    min-height: 64px;
+    border: 0;
+    border-radius: 18px;
+    background: #fbbf24;
+    color: #111827;
+    font: inherit;
+    font-size: 20px;
+    font-weight: 850;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active {
+    transform: scale(.99);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .small {
+    min-height: 48px;
+    font-size: 15px;
+    background: rgba(255,255,255,.12);
+    color: white;
+    border: 1px solid rgba(255,255,255,.16);
+  }
+  .meta {
+    margin-top: 14px;
+    color: rgba(255,255,255,.7);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .history {
+    margin-top: 12px;
+    color: rgba(255,255,255,.78);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .status {
+    margin-top: 12px;
+    color: rgba(255,255,255,.52);
+    font-size: 12px;
+  }
+
+</style>
+</head>
+<body>
+<a class="tool-navigation" href="../../index.html">Все инструменты</a>
+<main class="box">
+  <h1>Словарь для импровизации</h1>
+  <p class="sub">Нажимай кнопку — приложение выдаст обычное существительное. Слова не повторяются до конца круга.</p>
+
+  <div id="word" class="word" aria-live="polite">готов?</div>
+
+  <button id="nextButton" type="button">Дать слово</button>
+
+  <div class="row">
+    <button id="backButton" class="small" type="button">Назад</button>
+    <button id="resetButton" class="small" type="button">Сбросить круг</button>
+  </div>
+
+  <div id="counter" class="meta">Использовано в круге: 0 из 926</div>
+  <div id="history" class="history"></div>
+  <div id="status" class="status" aria-live="polite">JS запущен, кнопки подключены</div>
+</main>
+<script src="./app.js"></script>
+</body>
+</html>
