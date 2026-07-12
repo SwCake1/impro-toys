@@ -4,6 +4,8 @@
   var deck = [];
   var shown = [];
   var previous = [];
+  var AudioContext = window.AudioContext || window.webkitAudioContext;
+  var audioContext = null;
 
   function byId(id) {
     return document.getElementById(id);
@@ -29,56 +31,52 @@
     byId("word").textContent = displayWord(word);
   }
 
-  function playDiceSound() {
-    var AudioContext = window.AudioContext || window.webkitAudioContext;
-    var context, buffer, data, source, filter, gain, length, i, j, now, time, hit, envelope;
-    var hits = [0, 0.055, 0.12];
+  function getAudioContext() {
+    var resume;
 
     if (!AudioContext) {
-      return;
+      return null;
     }
 
+    if (!audioContext) {
+      audioContext = new AudioContext();
+    }
+
+    if (audioContext.state === "suspended") {
+      resume = audioContext.resume();
+      if (resume && typeof resume.catch === "function") {
+        resume.catch(function () {});
+      }
+    }
+
+    return audioContext;
+  }
+
+  function playChime() {
+    var context, now, tones, i, tone, oscillator, gain;
+
     try {
-      context = new AudioContext();
-      length = Math.floor(context.sampleRate * 0.2);
-      buffer = context.createBuffer(1, length, context.sampleRate);
-      data = buffer.getChannelData(0);
-
-      for (i = 0; i < length; i = i + 1) {
-        time = i / context.sampleRate;
-        envelope = 0;
-
-        for (j = 0; j < hits.length; j = j + 1) {
-          hit = time - hits[j];
-          if (hit >= 0 && hit < 0.045) {
-            envelope = Math.max(envelope, 1 - hit / 0.045);
-          }
-        }
-
-        data[i] = (Math.random() * 2 - 1) * envelope;
+      context = getAudioContext();
+      if (!context) {
+        return;
       }
 
-      source = context.createBufferSource();
-      filter = context.createBiquadFilter();
-      gain = context.createGain();
       now = context.currentTime;
+      tones = [[659.25, 0.045, 0.36], [987.77, 0.025, 0.28]];
 
-      filter.type = "bandpass";
-      filter.frequency.setValueAtTime(950, now);
-      filter.Q.setValueAtTime(0.7, now);
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-
-      source.buffer = buffer;
-      source.connect(filter);
-      filter.connect(gain);
-      gain.connect(context.destination);
-      source.start(now);
-      source.stop(now + 0.2);
-
-      window.setTimeout(function () {
-        context.close();
-      }, 250);
+      for (i = 0; i < tones.length; i = i + 1) {
+        tone = tones[i];
+        oscillator = context.createOscillator();
+        gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(tone[0], now);
+        gain.gain.setValueAtTime(tone[1], now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + tone[2]);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(now);
+        oscillator.stop(now + tone[2]);
+      }
     } catch (error) {
       // Звук является дополнительной обратной связью и не должен мешать генератору.
     }
@@ -121,7 +119,7 @@
     showWord(word);
     renderCounter();
     renderHistory();
-    playDiceSound();
+    playChime();
   }
 
   function backWord() {
@@ -137,7 +135,7 @@
     showWord(word);
     renderCounter();
     renderHistory();
-    playDiceSound();
+    playChime();
   }
 
   function init() {
