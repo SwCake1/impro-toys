@@ -29,6 +29,43 @@
 
   function showWord(word) {
     byId("word").textContent = displayWord(word);
+    animateCard();
+    createBurst();
+  }
+
+  function animateCard() {
+    var card = byId("wordCard");
+    card.classList.remove("is-changing");
+    void card.offsetWidth;
+    card.classList.add("is-changing");
+  }
+
+  function createBurst() {
+    var card, rect, colors, i, particle, angle, distance;
+
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    card = byId("wordCard");
+    rect = card.getBoundingClientRect();
+    colors = ["#fbbf24", "#ffffff", "#94a3b8"];
+
+    for (i = 0; i < 8; i = i + 1) {
+      particle = document.createElement("span");
+      angle = (Math.PI * 2 * i / 8) + (Math.random() * 0.25);
+      distance = 45 + Math.random() * 50;
+      particle.className = "burst";
+      particle.style.setProperty("--x", (rect.left + rect.width / 2) + "px");
+      particle.style.setProperty("--y", (rect.top + rect.height / 2) + "px");
+      particle.style.setProperty("--dx", (Math.cos(angle) * distance) + "px");
+      particle.style.setProperty("--dy", (Math.sin(angle) * distance) + "px");
+      particle.style.setProperty("--color", colors[i % colors.length]);
+      document.body.appendChild(particle);
+      window.setTimeout((function (item) {
+        return function () { item.remove(); };
+      }(particle)), 750);
+    }
   }
 
   function getAudioContext() {
@@ -86,7 +123,7 @@
     var h = byId("history");
     var list = shown.slice(Math.max(0, shown.length - 10)).reverse();
     if (list.length === 0) {
-      h.innerHTML = "";
+      h.textContent = "";
       return;
     }
     h.textContent = "Последние слова: " + list.map(displayWord).join(", ");
@@ -94,6 +131,7 @@
 
   function renderCounter() {
     byId("counter").textContent = "Использовано в круге: " + shown.length + " из " + WORDS.length;
+    byId("backButton").disabled = previous.length < 2;
   }
 
   function resetDeck() {
@@ -101,6 +139,7 @@
     shown = [];
     previous = [];
     byId("word").textContent = "Готов?";
+    byId("wordCard").classList.remove("is-changing");
     renderCounter();
     renderHistory();
   }
