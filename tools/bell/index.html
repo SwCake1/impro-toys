@@ -182,7 +182,10 @@
   .settings-panel {
     position: fixed;
     bottom: 74px; right: 28px;
-    width: 252px;
+    display: flex;
+    width: min(320px, calc(100vw - 32px));
+    max-height: min(680px, calc(100vh - 100px));
+    flex-direction: column;
     background: rgba(14, 9, 2, 0.97);
     border: 1px solid rgba(201,168,76,0.18);
     border-radius: 14px;
@@ -212,7 +215,54 @@
     padding-left: 2px;
   }
 
-  .sound-list { display: flex; flex-direction: column; gap: 2px; }
+  .volume-toggle {
+    display: flex;
+    width: 100%;
+    min-height: 46px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding: 8px 12px;
+    border: 1px solid rgba(201,168,76,0.24);
+    border-radius: 10px;
+    background: rgba(201,168,76,0.08);
+    color: rgba(240,208,128,0.72);
+    cursor: none;
+    transition: background 0.13s, border-color 0.13s, color 0.13s;
+  }
+  .volume-toggle:hover,
+  .volume-toggle:focus-visible {
+    border-color: rgba(201,168,76,0.52);
+    outline: none;
+    background: rgba(201,168,76,0.14);
+    color: var(--gold-light);
+  }
+  .volume-toggle:focus-visible {
+    box-shadow: 0 0 0 2px rgba(201,168,76,0.28);
+  }
+  .volume-toggle span {
+    font-size: 0.78rem;
+  }
+  .volume-toggle strong {
+    min-width: 58px;
+    border-radius: 999px;
+    padding: 6px 9px;
+    background: var(--gold);
+    color: #1a1004;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+
+  .sound-list {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: rgba(201,168,76,0.35) transparent;
+  }
 
   .sound-item {
     display: flex;
@@ -261,20 +311,22 @@
   }
 
   .preview-btn {
+    width: 44px;
+    height: 44px;
     background: none;
     border: none;
     cursor: none;
     color: rgba(201,168,76,0.25);
-    padding: 3px;
-    display: flex; align-items: center; flex-shrink: 0;
-    border-radius: 4px;
+    padding: 0;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    border-radius: 50%;
     transition: color 0.13s, background 0.13s;
   }
   .preview-btn:hover {
     color: var(--gold);
     background: rgba(201,168,76,0.08);
   }
-  .preview-btn svg { width: 11px; height: 11px; }
+  .preview-btn svg { width: 18px; height: 18px; margin-left: 2px; }
 
   /* ── Screaming Cat ── */
   .cat-container {
@@ -399,6 +451,7 @@
     .settings-btn,
     .sound-item,
     .preview-btn,
+    .volume-toggle,
     .tool-navigation {
       cursor: auto;
     }
@@ -559,6 +612,11 @@
 </button>
 
 <div class="settings-panel" id="settingsPanel">
+  <h3>Громкость</h3>
+  <button class="volume-toggle" id="volumeToggle" type="button" aria-label="Громкость: ×1.0. Нажмите, чтобы изменить">
+    <span>Усиление звука</span>
+    <strong id="volumeValue">×1.0</strong>
+  </button>
   <h3>Тип звука</h3>
   <div class="sound-list" id="soundList"></div>
 </div>
@@ -566,14 +624,15 @@
 <script>
 // ── Audio helpers ──────────────────────────────────────────────────────────
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
-const OUTPUT_VOLUME = 2;
+const VOLUME_LEVELS = [1, 1.5, 2];
+let volumeIndex = 0;
 let ctx = null;
 let output = null;
 function getCtx() {
   if (!ctx) {
     ctx = new AudioCtx();
     output = ctx.createGain();
-    output.gain.value = OUTPUT_VOLUME;
+    output.gain.value = VOLUME_LEVELS[volumeIndex];
     output.connect(ctx.destination);
   }
   if (ctx.state === 'suspended') ctx.resume();
@@ -615,6 +674,85 @@ function noiseClick(vol, dest) {
   src.start(now);
 }
 
+function playPartials(options) {
+  const c = getCtx();
+  const start = c.currentTime + (options.delay || 0);
+  const master = c.createGain();
+  const duration = options.duration || 0.75;
+  const attack = options.attack || 0.004;
+
+  master.gain.setValueAtTime(0.0001, start);
+  master.gain.exponentialRampToValueAtTime(options.volume || 0.45, start + attack);
+  master.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  master.connect(getOutput());
+
+  options.partials.forEach(partial => {
+    const oscillator = c.createOscillator();
+    const gain = c.createGain();
+    const frequency = partial[0];
+    const level = partial[1];
+    const partialDuration = partial[2] || duration;
+
+    oscillator.type = partial[3] || options.type || 'sine';
+    oscillator.frequency.setValueAtTime(frequency, start);
+    if (options.pitchDrop) {
+      oscillator.frequency.exponentialRampToValueAtTime(
+        frequency * options.pitchDrop,
+        start + Math.min(partialDuration, duration)
+      );
+    }
+    gain.gain.setValueAtTime(level, start);
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      start + Math.min(partialDuration, duration)
+    );
+    oscillator.connect(gain);
+    gain.connect(master);
+    oscillator.start(start);
+    oscillator.stop(start + Math.min(partialDuration, duration) + 0.03);
+  });
+
+  if (options.strike) {
+    const strikeSize = Math.floor(c.sampleRate * 0.018);
+    const strikeBuffer = c.createBuffer(1, strikeSize, c.sampleRate);
+    const strikeData = strikeBuffer.getChannelData(0);
+    const strikeSource = c.createBufferSource();
+    const strikeGain = c.createGain();
+    const highpass = c.createBiquadFilter();
+
+    for (let i = 0; i < strikeSize; i++) {
+      strikeData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (strikeSize * 0.12));
+    }
+    highpass.type = 'highpass';
+    highpass.frequency.value = options.strikeFrequency || 1400;
+    strikeGain.gain.value = options.strike;
+    strikeSource.buffer = strikeBuffer;
+    strikeSource.connect(highpass);
+    highpass.connect(strikeGain);
+    strikeGain.connect(master);
+    strikeSource.start(start);
+  }
+}
+
+function playSweep(options) {
+  const c = getCtx();
+  const start = c.currentTime + (options.delay || 0);
+  const oscillator = c.createOscillator();
+  const gain = c.createGain();
+  const duration = options.duration || 1;
+
+  oscillator.type = options.type || 'sine';
+  oscillator.frequency.setValueAtTime(options.from, start);
+  oscillator.frequency.exponentialRampToValueAtTime(options.to, start + duration);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(options.volume || 0.25, start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(getOutput());
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
 // ── Sound definitions ──────────────────────────────────────────────────────
 const SOUNDS = [
   {
@@ -632,20 +770,6 @@ const SOUNDS = [
     }
   },
   {
-    id:'church', name:'Церковный', tag:'глубокий гул', label:'Бо-ом!',
-    play() {
-      const c = getCtx(), now = c.currentTime, m = c.createGain();
-      m.gain.setValueAtTime(0.85,now); m.gain.exponentialRampToValueAtTime(0.001,now+5);
-      m.connect(getOutput());
-      [[220,.7,4.5],[330,.5,4],[550,.3,3],[660,.2,2.5],[990,.1,2]].forEach(([f,v,d])=>{
-        const o=c.createOscillator(),g=c.createGain();
-        o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
-        o.connect(g); g.connect(m); o.start(now); o.stop(now+d);
-      });
-      noiseClick(0.4,m);
-    }
-  },
-  {
     id:'triangle', name:'Треугольник', tag:'звонкий', label:'Дин!',
     play() {
       const c = getCtx(), now = c.currentTime, m = c.createGain();
@@ -659,20 +783,6 @@ const SOUNDS = [
     }
   },
   {
-    id:'gong', name:'Гонг', tag:'восточный', label:'Гоо-нг!',
-    play() {
-      const c = getCtx(), now = c.currentTime, m = c.createGain();
-      m.gain.setValueAtTime(1,now); m.gain.exponentialRampToValueAtTime(0.001,now+6);
-      m.connect(getOutput());
-      [[110,.8,5],[175,.5,4.5],[260,.35,3.5],[390,.2,2.5],[520,.1,2],[780,.05,1.5]].forEach(([f,v,d])=>{
-        const o=c.createOscillator(),g=c.createGain();
-        o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
-        o.connect(g); g.connect(m); o.start(now); o.stop(now+d);
-      });
-      noiseClick(0.5,m);
-    }
-  },
-  {
     id:'chime', name:'Чайм', tag:'мелодичный', label:'Тинь-лин!',
     play() {
       const c = getCtx();
@@ -683,22 +793,6 @@ const SOUNDS = [
           o.connect(g); g.connect(getOutput()); o.start(now); o.stop(now+1.5);
         },i*130);
       });
-    }
-  },
-  {
-    id:'wind', name:'Ветер в трубках', tag:'атмосферный', label:'Шу-у-у...',
-    play() {
-      const c = getCtx();
-      const freqs=[523,587,659,698,784,880];
-      for(let i=0;i<7;i++){
-        const delay=Math.random()*700;
-        const freq=freqs[Math.floor(Math.random()*freqs.length)];
-        setTimeout(()=>{
-          const now=c.currentTime,o=c.createOscillator(),g=c.createGain();
-          o.frequency.value=freq; g.gain.setValueAtTime(0.22,now); g.gain.exponentialRampToValueAtTime(0.0001,now+1.2);
-          o.connect(g); g.connect(getOutput()); o.start(now); o.stop(now+1.2);
-        },delay);
-      }
     }
   },
   {
@@ -764,6 +858,125 @@ const SOUNDS = [
       }
     }
   },
+  {
+    id:'bicycle_bell', name:'Велосипедный звонок', tag:'живое дребезжащее тринь', label:'Тринь-тринь!',
+    play() {
+      [0, 0.08, 0.16, 0.25, 0.35, 0.46].forEach((delay, index) => {
+        playPartials({
+          volume: 0.38, duration: 0.55, delay, strike: 0.16,
+          pitchDrop: index % 2 ? 0.97 : 1.015,
+          partials: [[index % 2 ? 1520 : 1680, 0.68], [2860, 0.3], [4170, 0.12]]
+        });
+      });
+    }
+  },
+  {
+    id:'school_bell', name:'Школьный звонок', tag:'настойчивый электрический трезвон', label:'Дзззынь!',
+    play() {
+      for (let i = 0; i < 11; i++) {
+        playPartials({
+          volume: 0.34, duration: 0.24, delay: i * 0.105, strike: 0.32, strikeFrequency: 950,
+          partials: [[i % 2 ? 920 : 1080, 0.72, 0.24, 'square'], [1840, 0.22, 0.18, 'triangle']]
+        });
+      }
+    }
+  },
+  {
+    id:'fairy_cascade', name:'Волшебный каскад', tag:'искристый сказочный перелив', label:'Тили-линь!',
+    play() {
+      [1318, 1661, 2093, 2637, 2093, 3322].forEach((frequency, index) => {
+        playPartials({
+          volume: 0.3 + index * 0.025, duration: 1.15, delay: index * 0.16,
+          partials: [[frequency, 0.65], [frequency * 1.5, 0.24], [frequency * 2, 0.1]]
+        });
+      });
+    }
+  },
+  {
+    id:'clock_chime', name:'Каминные часы', tag:'размеренная мелодия часов', label:'Дон-динь!',
+    play() {
+      [659, 523, 587, 392].forEach((frequency, index) => {
+        playPartials({
+          volume: 0.5, duration: 1.35, delay: index * 0.34, strike: 0.18, strikeFrequency: 800,
+          partials: [[frequency, 0.68], [frequency * 2.01, 0.3], [frequency * 3.9, 0.1]]
+        });
+      });
+    }
+  },
+  {
+    id:'arcade_win', name:'Победа в автомате', tag:'бодрый игровой джингл', label:'Та-да-дам!',
+    play() {
+      [523, 659, 784, 1047].forEach((frequency, index) => {
+        playPartials({
+          volume: 0.42, duration: index === 3 ? 1.1 : 0.42, delay: index * 0.14,
+          partials: [[frequency, 0.62, null, 'square'], [frequency * 2, 0.25, null, 'sine']]
+        });
+      });
+    }
+  },
+  {
+    id:'sleigh_bells', name:'Бубенцы', tag:'россыпь праздничного серебра', label:'Дзинь-дзинь!',
+    play() {
+      for (let i = 0; i < 14; i++) {
+        playPartials({
+          volume: 0.23 + Math.random() * 0.12,
+          duration: 0.45 + Math.random() * 0.45,
+          delay: i * 0.07 + Math.random() * 0.05,
+          strike: 0.24,
+          strikeFrequency: 2400,
+          partials: [[1450 + Math.random() * 850, 0.65], [3200 + Math.random() * 1200, 0.22]]
+        });
+      }
+    }
+  },
+  {
+    id:'magic_portal', name:'Магический портал', tag:'нарастающий сияющий вихрь', label:'Вжух!',
+    play() {
+      playSweep({ from: 180, to: 1440, duration: 1.55, volume: 0.24, type: 'sawtooth' });
+      playSweep({ from: 270, to: 2160, duration: 1.55, volume: 0.18, type: 'triangle' });
+      [0.75, 1.05, 1.32].forEach((delay, index) => {
+        playPartials({
+          volume: 0.34 + index * 0.06, duration: 1.1, delay,
+          partials: [[880 + index * 440, 0.65], [1760 + index * 660, 0.22]]
+        });
+      });
+    }
+  },
+  {
+    id:'kitchen_timer', name:'Кухонный таймер', tag:'заводной механический треск', label:'Др-р-р-инь!',
+    play() {
+      for (let i = 0; i < 13; i++) {
+        playPartials({
+          volume: 0.32, duration: 0.19, delay: i * 0.075, strike: 0.28, strikeFrequency: 1200,
+          partials: [[i % 2 ? 1280 : 1510, 0.68, 0.19, 'square'], [2550, 0.18, 0.12]]
+        });
+      }
+    }
+  },
+  {
+    id:'royal_fanfare', name:'Королевский сигнал', tag:'торжественный звонкий аккорд', label:'Та-да-а!',
+    play() {
+      [[523, 659, 784], [659, 831, 988], [784, 988, 1175]].forEach((chord, index) => {
+        playPartials({
+          volume: 0.4 + index * 0.05, duration: index === 2 ? 1.65 : 0.65, delay: index * 0.34,
+          strike: 0.14,
+          partials: chord.map(frequency => [frequency, 0.48, null, 'triangle'])
+        });
+      });
+    }
+  },
+  {
+    id:'grand_finale', name:'Большой финал', tag:'широкая сияющая точка', label:'Финал!',
+    play() {
+      [523, 659, 784, 1047].forEach((frequency, index) => {
+        playPartials({
+          volume: 0.4 + index * 0.035, duration: 1.75, delay: index * 0.11,
+          strike: index === 0 ? 0.3 : 0.1,
+          partials: [[frequency, 0.58], [frequency * 1.5, 0.3], [frequency * 2, 0.18], [frequency * 3.02, 0.07]]
+        });
+      });
+    }
+  },
 ];
 
 const catContainer = document.getElementById('catContainer');
@@ -795,6 +1008,22 @@ const settingsBtn = document.getElementById('settingsBtn');
 const settingsPanel = document.getElementById('settingsPanel');
 const soundListEl = document.getElementById('soundList');
 const catalogLink = document.getElementById('catalogLink');
+const volumeToggle = document.getElementById('volumeToggle');
+const volumeValue = document.getElementById('volumeValue');
+
+function cycleVolume() {
+  volumeIndex = (volumeIndex + 1) % VOLUME_LEVELS.length;
+  const volume = VOLUME_LEVELS[volumeIndex];
+  const volumeLabel = `×${volume.toFixed(1)}`;
+
+  if (output) {
+    output.gain.setTargetAtTime(volume, ctx.currentTime, 0.01);
+  }
+  volumeValue.textContent = volumeLabel;
+  volumeToggle.setAttribute('aria-label', `Громкость: ${volumeLabel}. Нажмите, чтобы изменить`);
+}
+
+volumeToggle.addEventListener('click', cycleVolume);
 
 // ── Build list ─────────────────────────────────────────────────────────────
 SOUNDS.forEach(s => {
@@ -807,7 +1036,7 @@ SOUNDS.forEach(s => {
       <div class="sound-name">${s.name}</div>
       <div class="sound-tag">${s.tag}</div>
     </div>
-    <button class="preview-btn" aria-label="Прослушать">
+    <button class="preview-btn" aria-label="Прослушать: ${s.name}">
       <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
     </button>`;
   soundListEl.appendChild(item);
