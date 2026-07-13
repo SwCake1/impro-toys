@@ -215,7 +215,8 @@
     padding-left: 2px;
   }
 
-  .volume-toggle {
+  .volume-toggle,
+  .screen-ring-toggle {
     display: flex;
     width: 100%;
     min-height: 46px;
@@ -231,19 +232,24 @@
     transition: background 0.13s, border-color 0.13s, color 0.13s;
   }
   .volume-toggle:hover,
-  .volume-toggle:focus-visible {
+  .volume-toggle:focus-visible,
+  .screen-ring-toggle:hover,
+  .screen-ring-toggle:focus-visible {
     border-color: rgba(201,168,76,0.52);
     outline: none;
     background: rgba(201,168,76,0.14);
     color: var(--gold-light);
   }
-  .volume-toggle:focus-visible {
+  .volume-toggle:focus-visible,
+  .screen-ring-toggle:focus-visible {
     box-shadow: 0 0 0 2px rgba(201,168,76,0.28);
   }
-  .volume-toggle span {
+  .volume-toggle span,
+  .screen-ring-toggle span {
     font-size: 0.78rem;
   }
-  .volume-toggle strong {
+  .volume-toggle strong,
+  .screen-ring-toggle strong {
     min-width: 58px;
     border-radius: 999px;
     padding: 6px 9px;
@@ -252,6 +258,14 @@
     font-size: 0.82rem;
     letter-spacing: 0.04em;
     text-align: center;
+  }
+  .screen-ring-toggle strong {
+    background: rgba(201,168,76,0.14);
+    color: rgba(240,208,128,0.58);
+  }
+  .screen-ring-toggle[aria-pressed="true"] strong {
+    background: var(--gold);
+    color: #1a1004;
   }
 
   .sound-list {
@@ -452,6 +466,7 @@
     .sound-item,
     .preview-btn,
     .volume-toggle,
+    .screen-ring-toggle,
     .tool-navigation {
       cursor: auto;
     }
@@ -616,6 +631,17 @@
   <button class="volume-toggle" id="volumeToggle" type="button" aria-label="Громкость: ×1.0. Нажмите, чтобы изменить">
     <span>Усиление звука</span>
     <strong id="volumeValue">×1.0</strong>
+  </button>
+  <h3>Управление</h3>
+  <button
+    class="screen-ring-toggle"
+    id="screenRingToggle"
+    type="button"
+    aria-label="Звонок по всему экрану: выключен"
+    aria-pressed="false"
+  >
+    <span>Звонок по всему экрану</span>
+    <strong id="screenRingValue">Выкл.</strong>
   </button>
   <h3>Тип звука</h3>
   <div class="sound-list" id="soundList"></div>
@@ -998,6 +1024,7 @@ function triggerCat() {
 let currentId = 'bell';
 let panelOpen = false;
 let labelTimeout = null;
+let screenRingEnabled = false;
 
 const bellBtn = document.getElementById('bellBtn');
 const labelEl = document.getElementById('label');
@@ -1010,6 +1037,8 @@ const soundListEl = document.getElementById('soundList');
 const catalogLink = document.getElementById('catalogLink');
 const volumeToggle = document.getElementById('volumeToggle');
 const volumeValue = document.getElementById('volumeValue');
+const screenRingToggle = document.getElementById('screenRingToggle');
+const screenRingValue = document.getElementById('screenRingValue');
 
 function cycleVolume() {
   volumeIndex = (volumeIndex + 1) % VOLUME_LEVELS.length;
@@ -1024,6 +1053,18 @@ function cycleVolume() {
 }
 
 volumeToggle.addEventListener('click', cycleVolume);
+
+function toggleScreenRing() {
+  screenRingEnabled = !screenRingEnabled;
+  screenRingToggle.setAttribute('aria-pressed', String(screenRingEnabled));
+  screenRingToggle.setAttribute(
+    'aria-label',
+    `Звонок по всему экрану: ${screenRingEnabled ? 'включен' : 'выключен'}`
+  );
+  screenRingValue.textContent = screenRingEnabled ? 'Вкл.' : 'Выкл.';
+}
+
+screenRingToggle.addEventListener('click', toggleScreenRing);
 
 // ── Build list ─────────────────────────────────────────────────────────────
 SOUNDS.forEach(s => {
@@ -1077,6 +1118,12 @@ settingsBtn.addEventListener('click', () => panelOpen ? closePanel() : openPanel
 document.addEventListener('click', e => {
   if (panelOpen && !settingsPanel.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target))
     closePanel();
+});
+
+document.addEventListener('click', e => {
+  if (!screenRingEnabled) return;
+  if (e.target.closest('#bellBtn, #settingsBtn, #settingsPanel, #catalogLink')) return;
+  ring();
 });
 
 // ── Ring ───────────────────────────────────────────────────────────────────
