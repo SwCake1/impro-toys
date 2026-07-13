@@ -566,18 +566,29 @@
 <script>
 // ── Audio helpers ──────────────────────────────────────────────────────────
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const OUTPUT_VOLUME = 2;
 let ctx = null;
+let output = null;
 function getCtx() {
-  if (!ctx) ctx = new AudioCtx();
+  if (!ctx) {
+    ctx = new AudioCtx();
+    output = ctx.createGain();
+    output.gain.value = OUTPUT_VOLUME;
+    output.connect(ctx.destination);
+  }
   if (ctx.state === 'suspended') ctx.resume();
   return ctx;
+}
+function getOutput() {
+  getCtx();
+  return output;
 }
 function makeGain(vol, decay, dest) {
   const g = getCtx().createGain();
   const now = getCtx().currentTime;
   g.gain.setValueAtTime(vol, now);
   g.gain.exponentialRampToValueAtTime(0.0001, now + decay);
-  g.connect(dest || getCtx().destination);
+  g.connect(dest || getOutput());
   return g;
 }
 function addOsc(freq, type, vol, decay, dest) {
@@ -588,7 +599,7 @@ function addOsc(freq, type, vol, decay, dest) {
   osc.frequency.value = freq;
   g.gain.setValueAtTime(vol, now);
   g.gain.exponentialRampToValueAtTime(0.0001, now + decay);
-  osc.connect(g); g.connect(dest || c.destination);
+  osc.connect(g); g.connect(dest || getOutput());
   osc.start(now); osc.stop(now + decay);
   return osc;
 }
@@ -600,7 +611,7 @@ function noiseClick(vol, dest) {
   for (let i = 0; i < sz; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/(sz*0.08));
   const src = c.createBufferSource(); src.buffer = buf;
   const g = c.createGain(); g.gain.value = vol;
-  src.connect(g); g.connect(dest || c.destination);
+  src.connect(g); g.connect(dest || getOutput());
   src.start(now);
 }
 
@@ -611,7 +622,7 @@ const SOUNDS = [
     play() {
       const c = getCtx(), now = c.currentTime, m = c.createGain();
       m.gain.setValueAtTime(0.7,now); m.gain.exponentialRampToValueAtTime(0.001,now+3);
-      m.connect(c.destination);
+      m.connect(getOutput());
       [[880,.6,2.5],[1480,.4,2],[2200,.25,1.5],[2640,.15,1.2],[3520,.08,.8]].forEach(([f,v,d])=>{
         const o=c.createOscillator(),g=c.createGain();
         o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
@@ -625,7 +636,7 @@ const SOUNDS = [
     play() {
       const c = getCtx(), now = c.currentTime, m = c.createGain();
       m.gain.setValueAtTime(0.85,now); m.gain.exponentialRampToValueAtTime(0.001,now+5);
-      m.connect(c.destination);
+      m.connect(getOutput());
       [[220,.7,4.5],[330,.5,4],[550,.3,3],[660,.2,2.5],[990,.1,2]].forEach(([f,v,d])=>{
         const o=c.createOscillator(),g=c.createGain();
         o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
@@ -639,7 +650,7 @@ const SOUNDS = [
     play() {
       const c = getCtx(), now = c.currentTime, m = c.createGain();
       m.gain.setValueAtTime(0.6,now); m.gain.exponentialRampToValueAtTime(0.001,now+2);
-      m.connect(c.destination);
+      m.connect(getOutput());
       [[2800,.5,1.8],[4200,.3,1.4],[5600,.15,1]].forEach(([f,v,d])=>{
         const o=c.createOscillator(),g=c.createGain();
         o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
@@ -652,7 +663,7 @@ const SOUNDS = [
     play() {
       const c = getCtx(), now = c.currentTime, m = c.createGain();
       m.gain.setValueAtTime(1,now); m.gain.exponentialRampToValueAtTime(0.001,now+6);
-      m.connect(c.destination);
+      m.connect(getOutput());
       [[110,.8,5],[175,.5,4.5],[260,.35,3.5],[390,.2,2.5],[520,.1,2],[780,.05,1.5]].forEach(([f,v,d])=>{
         const o=c.createOscillator(),g=c.createGain();
         o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
@@ -669,7 +680,7 @@ const SOUNDS = [
         setTimeout(()=>{
           const now=c.currentTime,o=c.createOscillator(),g=c.createGain();
           o.frequency.value=freq; g.gain.setValueAtTime(0.35,now); g.gain.exponentialRampToValueAtTime(0.0001,now+1.5);
-          o.connect(g); g.connect(c.destination); o.start(now); o.stop(now+1.5);
+          o.connect(g); g.connect(getOutput()); o.start(now); o.stop(now+1.5);
         },i*130);
       });
     }
@@ -685,7 +696,7 @@ const SOUNDS = [
         setTimeout(()=>{
           const now=c.currentTime,o=c.createOscillator(),g=c.createGain();
           o.frequency.value=freq; g.gain.setValueAtTime(0.22,now); g.gain.exponentialRampToValueAtTime(0.0001,now+1.2);
-          o.connect(g); g.connect(c.destination); o.start(now); o.stop(now+1.2);
+          o.connect(g); g.connect(getOutput()); o.start(now); o.stop(now+1.2);
         },delay);
       }
     }
@@ -695,7 +706,7 @@ const SOUNDS = [
     play() {
       const c = getCtx(), now = c.currentTime, m = c.createGain();
       m.gain.setValueAtTime(0.5,now); m.gain.exponentialRampToValueAtTime(0.001,now+0.55);
-      m.connect(c.destination);
+      m.connect(getOutput());
       [[540,.6,.4,'square'],[800,.4,.3,'square'],[1080,.2,.25,'square']].forEach(([f,v,d,t])=>{
         const o=c.createOscillator(),g=c.createGain();
         o.type=t; o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
@@ -712,7 +723,7 @@ const SOUNDS = [
         setTimeout(()=>{
           const now=c.currentTime,o=c.createOscillator(),g=c.createGain();
           o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
-          o.connect(g); g.connect(c.destination); o.start(now); o.stop(now+d);
+          o.connect(g); g.connect(getOutput()); o.start(now); o.stop(now+d);
         },delay);
       });
     }
@@ -722,7 +733,7 @@ const SOUNDS = [
     play() {
       const c = getCtx(), now = c.currentTime, m = c.createGain();
       m.gain.setValueAtTime(0.6,now); m.gain.exponentialRampToValueAtTime(0.001,now+7);
-      m.connect(c.destination);
+      m.connect(getOutput());
       [[396,.5,6],[528,.3,5],[639,.2,4],[741,.1,3]].forEach(([f,v,d])=>{
         const o=c.createOscillator(),g=c.createGain();
         o.frequency.value=f; g.gain.setValueAtTime(v,now); g.gain.exponentialRampToValueAtTime(0.0001,now+d);
@@ -748,7 +759,7 @@ const SOUNDS = [
         o.type='square';
         o.frequency.value=i%2===0?1200:1450;
         g.gain.setValueAtTime(0.13,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur/18);
-        o.connect(g); g.connect(c.destination);
+        o.connect(g); g.connect(getOutput());
         o.start(t); o.stop(t+dur/18+0.01);
       }
     }
