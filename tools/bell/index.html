@@ -433,6 +433,60 @@
     100% { opacity: 0; }
   }
 
+  /* ── Egor surprise ── */
+  .egor-container {
+    --egor-tilt: -2deg;
+    --egor-tilt-reverse: 2deg;
+    --egor-flip: 1;
+    position: fixed;
+    bottom: -5vh;
+    left: 50%;
+    width: min(255px, 66vw);
+    height: min(345px, 60vh);
+    transform: translateX(-50%) translateY(115%) rotate(var(--egor-tilt));
+    transform-origin: center bottom;
+    pointer-events: none;
+    z-index: 51;
+    opacity: 0;
+  }
+  .egor-container.pop {
+    animation: egorPop 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .egor-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+    object-position: center bottom;
+    transform: scaleX(var(--egor-flip));
+    filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.55));
+  }
+  @keyframes egorPop {
+    0% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(115%) rotate(var(--egor-tilt)) scale(0.82);
+    }
+    18% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2%) rotate(var(--egor-tilt-reverse)) scale(1.04);
+    }
+    30% {
+      transform: translateX(-50%) translateY(2%) rotate(var(--egor-tilt)) scale(0.99);
+    }
+    62% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) rotate(0) scale(1);
+    }
+    78% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) rotate(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(125%) rotate(var(--egor-tilt-reverse)) scale(0.94);
+    }
+  }
+
   /* ── Cursor ── */
   .cursor {
     position: fixed;
@@ -616,6 +670,10 @@
     <line x1="132" y1="66" x2="119" y2="67" stroke="#ffbb44" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
     <line x1="128" y1="82" x2="116" y2="79" stroke="#ffbb44" stroke-width="2" stroke-linecap="round" opacity="0.75"/>
   </svg>
+</div>
+
+<div class="egor-container" id="egorContainer" aria-hidden="true">
+  <img class="egor-image" id="egorImage" alt="">
 </div>
 
 <!-- Settings -->
@@ -1003,15 +1061,56 @@ const SOUNDS = [
       });
     }
   },
+  {
+    id:'borya', name:'Боря', tag:'радостный выход', label:'Дзынь-дзынь!',
+    play() {
+      playSweep({ from: 145, to: 440, duration: 0.34, volume: 0.2, type: 'triangle' });
+      playPartials({
+        volume: 0.42, duration: 0.7, delay: 0.08, strike: 0.28, strikeFrequency: 980,
+        partials: [[392, 0.58], [523, 0.38], [659, 0.22]]
+      });
+      playPartials({
+        volume: 0.34, duration: 0.9, delay: 0.32,
+        partials: [[659, 0.56], [784, 0.32], [988, 0.16]]
+      });
+    }
+  },
+  {
+    id:'egor', name:'Егор', tag:'эффектное появление', label:'Сосааать!',
+    play() {
+      playSweep({ from: 210, to: 72, duration: 0.38, volume: 0.2, type: 'sawtooth' });
+      playPartials({
+        volume: 0.48, duration: 0.72, delay: 0.08, strike: 0.35, strikeFrequency: 720,
+        pitchDrop: 0.84,
+        partials: [[196, 0.64, 0.72, 'square'], [247, 0.42, 0.64, 'triangle'], [294, 0.28, 0.58]]
+      });
+      playPartials({
+        volume: 0.32, duration: 0.8, delay: 0.38,
+        partials: [[784, 0.6], [1176, 0.26], [1568, 0.12]]
+      });
+    }
+  },
 ];
 
 const catContainer = document.getElementById('catContainer');
 const catText = document.getElementById('catText');
+const egorContainer = document.getElementById('egorContainer');
+const egorImage = document.getElementById('egorImage');
 
 const CAT_SCREAMS = ['А-А-А-А-А!!!', 'МЯ-А-А-У!!!', 'МРРА-А-У!!!', 'А-А-У-У!!!', 'ААААА!!!'];
+const PERSON_IMAGES = {
+  egor: [
+    'Assets/flow-cutout.webp',
+    'Assets/fly-cutout.webp',
+    'Assets/jump-cutout.webp'
+  ],
+  borya: ['Assets/Borya-cutout.webp']
+};
 let catTimeout = null;
+let egorTimeout = null;
 
 function triggerCat() {
+  egorContainer.classList.remove('pop');
   catText.textContent = CAT_SCREAMS[Math.floor(Math.random() * CAT_SCREAMS.length)];
   catContainer.classList.remove('scream');
   void catContainer.offsetWidth;
@@ -1019,6 +1118,27 @@ function triggerCat() {
   if (catTimeout) clearTimeout(catTimeout);
   catTimeout = setTimeout(() => catContainer.classList.remove('scream'), 2300);
 }
+
+function triggerPerson(images) {
+  catContainer.classList.remove('scream');
+  egorImage.src = images[Math.floor(Math.random() * images.length)];
+  const tilt = -4 + Math.random() * 8;
+  egorContainer.style.setProperty('--egor-tilt', `${tilt}deg`);
+  egorContainer.style.setProperty('--egor-tilt-reverse', `${tilt * -0.6}deg`);
+  egorContainer.style.setProperty('--egor-flip', Math.random() < 0.5 ? '-1' : '1');
+  egorContainer.classList.remove('pop');
+  void egorContainer.offsetWidth;
+  egorContainer.classList.add('pop');
+  if (egorTimeout) clearTimeout(egorTimeout);
+  egorTimeout = setTimeout(() => egorContainer.classList.remove('pop'), 2300);
+}
+
+Object.values(PERSON_IMAGES).forEach(images => {
+  images.forEach(src => {
+    const image = new Image();
+    image.src = src;
+  });
+});
 
 
 let currentId = 'bell';
@@ -1152,7 +1272,12 @@ function ring() {
   glowBg.style.opacity = '3';
   setTimeout(() => glowBg.style.opacity = '1', 300);
 
-  triggerCat();
+  const personImages = PERSON_IMAGES[sound.id];
+  if (personImages) {
+    triggerPerson(personImages);
+  } else {
+    triggerCat();
+  }
 
   if (labelTimeout) clearTimeout(labelTimeout);
   labelTimeout = setTimeout(() => labelEl.classList.remove('show'), 1500);
