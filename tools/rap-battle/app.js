@@ -5,19 +5,91 @@
   const liveTopic = document.querySelector("#liveTopic");
   const topicButton = document.querySelector("#topicButton");
   const matchup = document.querySelector(".matchup");
-  const battleSound = new Audio("./chime.mp3");
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  let audioContext = null;
 
   let previousIndex = -1;
-  battleSound.preload = "auto";
-  battleSound.volume = 0.1;
+
+  function getAudioContext() {
+    var resume;
+
+    if (!AudioContext) {
+      return null;
+    }
+
+    if (!audioContext) {
+      audioContext = new AudioContext();
+    }
+
+    if (audioContext.state === "suspended") {
+      resume = audioContext.resume();
+      if (resume && typeof resume.catch === "function") {
+        resume.catch(function () {});
+      }
+    }
+
+    return audioContext;
+  }
+
+  function playNoiseHit(context, destination, now, volume, duration, highpassFreq) {
+    var size, buffer, data, i, source, filter, gain;
+
+    size = Math.floor(context.sampleRate * duration);
+    buffer = context.createBuffer(1, size, context.sampleRate);
+    data = buffer.getChannelData(0);
+    for (i = 0; i < size; i = i + 1) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (size * 0.15));
+    }
+
+    source = context.createBufferSource();
+    source.buffer = buffer;
+    filter = context.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = highpassFreq;
+    gain = context.createGain();
+    gain.gain.value = volume;
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(destination);
+    source.start(now);
+  }
 
   function playBattleSound() {
-    battleSound.pause();
-    battleSound.currentTime = 0;
+    var context, now, master, partials, i, partial, oscillator, gain;
 
-    const playback = battleSound.play();
-    if (playback) {
-      playback.catch(() => {});
+    try {
+      context = getAudioContext();
+      if (!context) {
+        return;
+      }
+
+      now = context.currentTime;
+
+      master = context.createGain();
+      master.gain.setValueAtTime(0.5, now);
+      master.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+      master.connect(context.destination);
+
+      partials = [[540, 0.6, 0.4, "square"], [800, 0.4, 0.3, "square"], [1080, 0.2, 0.25, "square"]];
+
+      for (i = 0; i < partials.length; i = i + 1) {
+        partial = partials[i];
+        oscillator = context.createOscillator();
+        gain = context.createGain();
+        oscillator.type = partial[3];
+        oscillator.frequency.value = partial[0];
+        gain.gain.setValueAtTime(partial[1], now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + partial[2]);
+        oscillator.connect(gain);
+        gain.connect(master);
+        oscillator.start(now);
+        oscillator.stop(now + partial[2]);
+      }
+
+      playNoiseHit(context, master, now, 0.5, 0.05, 300);
+    } catch (error) {
+      // Звук является дополнительной обратной связью и не должен мешать генератору тем.
     }
   }
 
