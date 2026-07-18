@@ -5,8 +5,20 @@
   const liveTopic = document.querySelector("#liveTopic");
   const topicButton = document.querySelector("#topicButton");
   const matchup = document.querySelector(".matchup");
+  const battleSound = new Audio("./scratch.mp3");
 
   let previousIndex = -1;
+  battleSound.preload = "auto";
+
+  function playBattleSound() {
+    battleSound.pause();
+    battleSound.currentTime = 0;
+
+    const playback = battleSound.play();
+    if (playback) {
+      playback.catch(() => {});
+    }
+  }
 
   function getNextIndex() {
     if (previousIndex === -1) {
@@ -34,6 +46,7 @@
     matchup.classList.remove("is-changing");
     void matchup.offsetWidth;
     matchup.classList.add("is-changing");
+    playBattleSound();
   }
 
   if (
