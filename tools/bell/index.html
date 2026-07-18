@@ -180,11 +180,13 @@
 
   /* ── Settings panel ── */
   .settings-panel {
+    --settings-top-clearance: max(4.75rem, calc(env(safe-area-inset-top) + 3.75rem));
     position: fixed;
     bottom: 74px; right: 28px;
     display: flex;
     width: min(320px, calc(100vw - 32px));
-    max-height: min(680px, calc(100vh - 100px));
+    max-height: min(680px, calc(100vh - 74px - var(--settings-top-clearance)));
+    max-height: min(680px, calc(100dvh - 74px - var(--settings-top-clearance)));
     flex-direction: column;
     background: rgba(14, 9, 2, 0.97);
     border: 1px solid rgba(201,168,76,0.18);
@@ -1087,7 +1089,7 @@ const SOUNDS = [
     }
   },
   {
-    id:'borya', name:'Боря', tag:'радостный выход', label:'Дзынь-дзынь!',
+    id:'borya', name:'Боря', tag:'радостный финал', label:'Дзынь-дзынь!',
     play() {
       playRecording('Assets/Динь.m4a');
     }
