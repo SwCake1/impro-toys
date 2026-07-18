@@ -5,7 +5,7 @@
   const liveTopic = document.querySelector("#liveTopic");
   const topicButton = document.querySelector("#topicButton");
   const matchup = document.querySelector(".matchup");
-  const battleSound = new Audio("./scratch.mp3");
+  const battleSound = new Audio("./chime.mp3");
 
   let previousIndex = -1;
   battleSound.preload = "auto";
