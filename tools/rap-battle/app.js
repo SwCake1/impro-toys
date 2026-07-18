@@ -9,7 +9,7 @@
 
   let previousIndex = -1;
   battleSound.preload = "auto";
-  battleSound.volume = 0.35;
+  battleSound.volume = 0.1;
 
   function playBattleSound() {
     battleSound.pause();
