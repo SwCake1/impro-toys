@@ -837,6 +837,31 @@ function playSweep(options) {
   oscillator.stop(start + duration + 0.03);
 }
 
+const recordingPlayers = new Map();
+
+function getRecording(src) {
+  if (!recordingPlayers.has(src)) {
+    const audio = new Audio(src);
+    audio.preload = 'auto';
+    recordingPlayers.set(src, { audio, source: null });
+  }
+  return recordingPlayers.get(src);
+}
+
+function playRecording(src) {
+  const recording = getRecording(src);
+  if (!recording.source) {
+    recording.source = getCtx().createMediaElementSource(recording.audio);
+    recording.source.connect(getOutput());
+  }
+  recording.audio.pause();
+  recording.audio.currentTime = 0;
+  recording.audio.play().catch(error => console.warn('Не удалось воспроизвести запись:', error));
+}
+
+getRecording('Assets/Динь.m4a');
+getRecording('Assets/Сосать.m4a');
+
 // ── Sound definitions ──────────────────────────────────────────────────────
 const SOUNDS = [
   {
@@ -1064,30 +1089,13 @@ const SOUNDS = [
   {
     id:'borya', name:'Боря', tag:'радостный выход', label:'Дзынь-дзынь!',
     play() {
-      playSweep({ from: 145, to: 440, duration: 0.34, volume: 0.2, type: 'triangle' });
-      playPartials({
-        volume: 0.42, duration: 0.7, delay: 0.08, strike: 0.28, strikeFrequency: 980,
-        partials: [[392, 0.58], [523, 0.38], [659, 0.22]]
-      });
-      playPartials({
-        volume: 0.34, duration: 0.9, delay: 0.32,
-        partials: [[659, 0.56], [784, 0.32], [988, 0.16]]
-      });
+      playRecording('Assets/Динь.m4a');
     }
   },
   {
     id:'egor', name:'Егор', tag:'эффектное появление', label:'Сосааать!',
     play() {
-      playSweep({ from: 210, to: 72, duration: 0.38, volume: 0.2, type: 'sawtooth' });
-      playPartials({
-        volume: 0.48, duration: 0.72, delay: 0.08, strike: 0.35, strikeFrequency: 720,
-        pitchDrop: 0.84,
-        partials: [[196, 0.64, 0.72, 'square'], [247, 0.42, 0.64, 'triangle'], [294, 0.28, 0.58]]
-      });
-      playPartials({
-        volume: 0.32, duration: 0.8, delay: 0.38,
-        partials: [[784, 0.6], [1176, 0.26], [1568, 0.12]]
-      });
+      playRecording('Assets/Сосать.m4a');
     }
   },
 ];
