@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Генератор острых тем для импровизационного рэп-баттла."
+    />
+    <title>Рэп батл! — инструменты для импровизации</title>
+    <link rel="stylesheet" href="../../shared/styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="battle-page">
+    <a class="tool-navigation" href="../../index.html">Все инструменты</a>
+
+    <main class="battle-shell">
+      <header class="battle-header">
+        <h1>Рэп<br />батл!</h1>
+      </header>
+
+      <section class="matchup" aria-labelledby="matchup-title">
+        <h2 id="matchup-title" class="visually-hidden">Тема баттла</h2>
+
+        <article class="side side--left">
+          <p id="leftSide" class="side__name">КТО?</p>
+        </article>
+
+        <div class="versus" aria-hidden="true">
+          <span>VS</span>
+        </div>
+
+        <article class="side side--right">
+          <p id="rightSide" class="side__name">ПРОТИВ КОГО?</p>
+        </article>
+      </section>
+
+      <button id="topicButton" class="topic-button" type="button">
+        <span>ДАЙ ТЕМУ</span>
+        <span class="topic-button__mark" aria-hidden="true">↯</span>
+      </button>
+
+      <p id="liveTopic" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
+    </main>
+
+    <noscript>
+      <p class="noscript-message">Для генерации тем нужен включённый JavaScript.</p>
+    </noscript>
+
+    <script src="./topics.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
