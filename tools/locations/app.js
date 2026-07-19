@@ -33,6 +33,72 @@
     ? window.matchMedia("(prefers-reduced-motion: reduce)")
     : { matches: false };
 
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  let audioContext = null;
+
+  function getAudioContext() {
+    var resume;
+
+    if (!AudioContextClass) {
+      return null;
+    }
+
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
+    }
+
+    if (audioContext.state === "suspended") {
+      resume = audioContext.resume();
+      if (resume && typeof resume.catch === "function") {
+        resume.catch(function () {});
+      }
+    }
+
+    return audioContext;
+  }
+
+  // Короткий сухой щелчок одной перекидной карточки: всплеск шума через
+  // полосовой фильтр даёт «пластиковый» тик настоящего split-flap табло.
+  function playFlipClick(context, now) {
+    var size, buffer, data, i, source, filter, gain;
+
+    size = Math.floor(context.sampleRate * 0.02);
+    buffer = context.createBuffer(1, size, context.sampleRate);
+    data = buffer.getChannelData(0);
+    for (i = 0; i < size; i = i + 1) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (size * 0.25));
+    }
+
+    source = context.createBufferSource();
+    source.buffer = buffer;
+
+    filter = context.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.value = 2400;
+    filter.Q.value = 0.8;
+
+    gain = context.createGain();
+    gain.gain.setValueAtTime(0.16, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(context.destination);
+    source.start(now);
+  }
+
+  function flipSound() {
+    try {
+      const context = getAudioContext();
+      if (!context) {
+        return;
+      }
+      playFlipClick(context, context.currentTime);
+    } catch (error) {
+      // Звук — дополнительная обратная связь и не должен мешать листанию.
+    }
+  }
+
   let order = [];
   let index = -1;
   let currentLocation = "";
@@ -162,6 +228,8 @@
     cell.element.classList.remove("is-flipping");
     void cell.element.offsetWidth;
     cell.element.classList.add("is-flipping");
+
+    flipSound();
 
     timers.push(
       setTimeout(() => {
