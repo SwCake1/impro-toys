@@ -845,17 +845,23 @@ function getRecording(src) {
   if (!recordingPlayers.has(src)) {
     const audio = new Audio(src);
     audio.preload = 'auto';
-    recordingPlayers.set(src, { audio, source: null });
+    recordingPlayers.set(src, { audio });
   }
   return recordingPlayers.get(src);
 }
 
+function configureAudioSession() {
+  if (!navigator.audioSession || navigator.audioSession.type === 'playback') return;
+  try {
+    navigator.audioSession.type = 'playback';
+  } catch (error) {
+    console.warn('Не удалось настроить аудиосессию:', error);
+  }
+}
+
 function playRecording(src) {
   const recording = getRecording(src);
-  if (!recording.source) {
-    recording.source = getCtx().createMediaElementSource(recording.audio);
-    recording.source.connect(getOutput());
-  }
+  configureAudioSession();
   recording.audio.pause();
   recording.audio.currentTime = 0;
   recording.audio.play().catch(error => console.warn('Не удалось воспроизвести запись:', error));
