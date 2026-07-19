@@ -91,6 +91,7 @@ html {
   box-shadow:
     inset 0 0 0 0.35rem rgba(0, 0, 0, 0.35),
     0 1.4rem 3rem rgba(0, 0, 0, 0.45);
+  perspective: 60rem;
 }
 
 .board__word {
@@ -101,55 +102,143 @@ html {
 }
 
 .board__cell {
+  --card-flip-half-duration: 42ms;
   position: relative;
-  display: inline-grid;
-  place-items: center;
   min-width: clamp(1.5rem, 5.6vw, 2.5rem);
   height: clamp(2.3rem, 8vw, 3.6rem);
   border-radius: 0.28rem;
-  background: linear-gradient(180deg, var(--board-cell-top), var(--board-cell));
   box-shadow:
-    inset 0 0.06rem 0 rgba(255, 255, 255, 0.06),
-    inset 0 -0.06rem 0 rgba(0, 0, 0, 0.55),
-    0 0.15rem 0.3rem rgba(0, 0, 0, 0.5);
+    0 0.08rem 0 rgba(255, 255, 255, 0.12),
+    0 0.2rem 0 #07090c,
+    0 0.35rem 0.55rem rgba(0, 0, 0, 0.55);
+  perspective: 10rem;
+  transform-style: preserve-3d;
 }
 
-/* Горизонтальная «щель» посередине перекидной ячейки */
+/* Щель и две боковые оси делают карточку похожей на физическую створку. */
 .board__cell::after {
   position: absolute;
-  top: 50%;
-  right: 0.12rem;
-  left: 0.12rem;
-  height: 0.06rem;
-  background: rgba(0, 0, 0, 0.55);
+  z-index: 8;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 0.12rem 50%, rgba(5, 6, 8, 0.42) 0 0.09rem, rgba(88, 96, 107, 0.18) 0.1rem 0.13rem, transparent 0.14rem),
+    radial-gradient(circle at calc(100% - 0.12rem) 50%, rgba(5, 6, 8, 0.42) 0 0.09rem, rgba(88, 96, 107, 0.18) 0.1rem 0.13rem, transparent 0.14rem),
+    linear-gradient(
+      to bottom,
+      transparent calc(50% - 0.035rem),
+      rgba(0, 0, 0, 0.28) calc(50% - 0.035rem),
+      rgba(0, 0, 0, 0.28) calc(50% + 0.035rem),
+      transparent calc(50% + 0.035rem)
+    );
   content: "";
-  transform: translateY(-50%);
   pointer-events: none;
 }
 
+.board__panel {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+  background: var(--board-cell);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.board__panel--top,
+.board__panel--flap-top {
+  top: 0;
+  border-radius: 0.28rem 0.28rem 0.08rem 0.08rem;
+  background: linear-gradient(180deg, #272e39, var(--board-cell-top));
+  transform-origin: center bottom;
+}
+
+.board__panel--bottom,
+.board__panel--flap-bottom {
+  bottom: 0;
+  border-radius: 0.08rem 0.08rem 0.28rem 0.28rem;
+  background: linear-gradient(180deg, #181d24, #12161c);
+  transform-origin: center top;
+}
+
+.board__panel--top,
+.board__panel--bottom {
+  z-index: 1;
+}
+
+.board__panel--flap-top {
+  z-index: 4;
+}
+
+.board__panel--flap-bottom {
+  z-index: 3;
+  visibility: hidden;
+  transform: rotateX(90deg);
+}
+
 .board__glyph {
-  display: block;
+  position: absolute;
+  left: 0;
+  display: grid;
+  width: 100%;
+  height: 200%;
+  place-items: center;
   color: var(--board-amber);
   font-family: "Courier New", "SF Mono", ui-monospace, monospace;
   font-size: clamp(1.25rem, 4.4vw, 2rem);
   font-weight: 700;
   line-height: 1;
+  text-transform: uppercase;
   text-shadow: 0 0 0.5rem rgba(255, 199, 77, 0.35);
-  transition: transform 60ms ease;
 }
 
-.board__cell.is-flipping .board__glyph {
-  animation: flip-tick 34ms ease-in-out;
+.board__panel--top .board__glyph,
+.board__panel--flap-top .board__glyph {
+  top: 0;
 }
 
-@keyframes flip-tick {
-  0% {
-    transform: translateY(-0.22em) scaleY(0.82);
-    opacity: 0.55;
+.board__panel--bottom .board__glyph,
+.board__panel--flap-bottom .board__glyph {
+  bottom: 0;
+}
+
+.board__cell.is-flipping .board__panel--flap-top {
+  animation: split-flap-top var(--card-flip-half-duration)
+    cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+}
+
+.board__cell.is-flipping .board__panel--flap-bottom {
+  visibility: visible;
+  animation: split-flap-bottom var(--card-flip-half-duration)
+    cubic-bezier(0.22, 0.61, 0.36, 1) var(--card-flip-half-duration) both;
+}
+
+@keyframes split-flap-top {
+  from {
+    filter: brightness(1);
+    transform: rotateX(0deg);
   }
-  100% {
-    transform: translateY(0) scaleY(1);
-    opacity: 1;
+
+  to {
+    filter: brightness(0.38);
+    transform: rotateX(-90deg);
+  }
+}
+
+@keyframes split-flap-bottom {
+  from {
+    box-shadow: 0 -0.7rem 0.8rem rgba(0, 0, 0, 0.58);
+    filter: brightness(0.42);
+    transform: rotateX(90deg);
+  }
+
+  to {
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    filter: brightness(1);
+    transform: rotateX(0deg);
   }
 }
 
