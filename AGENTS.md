@@ -11,6 +11,12 @@ catalog assets under `shared/`. Architectural decisions belong in `docs/`; see
 requirements live under `openspec/specs/`. Create directories only when a tool
 needs them.
 
+## Product and Experience Design
+
+Give every tool its own distinct visual design, UX, and product ideas based on
+its specific purpose. When creating a new tool, do not use existing tools as a
+design or interaction template; develop an original concept for it instead.
+
 ## Build, Test, and Development Commands
 
 There is no build step or package manager. Open the root `index.html` directly
