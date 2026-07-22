@@ -27,11 +27,67 @@
 
   // Колода ещё не показанных в текущем цикле отношений.
   let deck = [];
-  // Последний показанный результат — нужен, чтобы новый цикл не начался с повтора.
+  // Текущий результат — нужен, чтобы новый цикл не начался с повтора.
   let current = null;
-  // Ровно один шаг назад: предыдущий результат и колода на момент его показа.
-  let previous = null;
+  // Стек истории: каждый шаг хранит показанное отношение и колоду того момента.
+  // Возврат снимает шаги по одному, поэтому можно пройти всю цепочку назад,
+  // и показанные записи не возвращаются в текущий цикл.
+  let history = [];
   let rebuildTimer = 0;
+
+  // --- Звук нажатия --------------------------------------------------------
+  // Мягкий пластиковый «тук» под материал интерфейса. Звук — необязательная
+  // обратная связь и никогда не должен мешать работе кнопок.
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  let audioContext = null;
+
+  function getAudioContext() {
+    if (!AudioContextClass) {
+      return null;
+    }
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
+    }
+    if (audioContext.state === "suspended") {
+      const resume = audioContext.resume();
+      if (resume && typeof resume.catch === "function") {
+        resume.catch(() => {});
+      }
+    }
+    return audioContext;
+  }
+
+  // Короткий мягкий тон с быстрым затуханием: разная высота отличает
+  // «новые отношения» от «возврата», не привлекая лишнего внимания.
+  function playTone(frequency) {
+    try {
+      const context = getAudioContext();
+      if (!context) {
+        return;
+      }
+      const now = context.currentTime;
+
+      const oscillator = context.createOscillator();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, now);
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.82, now + 0.12);
+
+      const gain = context.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.14, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.18);
+    } catch (error) {
+      // Тишина при сбое звука — интерфейс продолжает работать.
+    }
+  }
+
+  // --- Колода --------------------------------------------------------------
 
   function shuffle(items) {
     const result = items.slice();
@@ -91,26 +147,30 @@
   function showNext() {
     const relationship = takeNext();
 
-    // Возврат отдаёт предыдущий результат вместе с колодой того момента, чтобы
-    // показанные записи не вернулись в текущий цикл.
-    previous = current ? { relationship: current, deck: deck.slice() } : null;
+    // Складываем текущий результат в историю вместе с колодой того момента,
+    // чтобы возврат восстанавливал состояние без повторов в цикле.
+    if (current) {
+      history.push({ relationship: current, deck: deck.slice() });
+    }
     current = relationship;
 
+    playTone(392);
     render(relationship);
-    backButton.disabled = previous === null;
+    backButton.disabled = history.length === 0;
   }
 
   function showPrevious() {
-    if (!previous) {
+    if (history.length === 0) {
       return;
     }
 
-    current = previous.relationship;
-    deck = previous.deck;
-    previous = null;
+    const step = history.pop();
+    current = step.relationship;
+    deck = step.deck;
 
+    playTone(294);
     render(current);
-    backButton.disabled = true;
+    backButton.disabled = history.length === 0;
   }
 
   newButton.addEventListener("click", showNext);
