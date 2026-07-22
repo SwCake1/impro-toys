@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Генератор первой реплики для старта импровизационной сцены: яркая открывающая фраза с тон-тегом и фильтром по тону."
+    />
+    <title>Первая реплика — инструменты для импровизации</title>
+    <link rel="stylesheet" href="../../shared/styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="fl-page">
+    <a class="tool-navigation" href="../../index.html">Все инструменты</a>
+
+    <main class="fl-stage">
+      <div class="fl-beam" aria-hidden="true"></div>
+      <div class="fl-dust" aria-hidden="true"></div>
+
+      <header class="fl-header">
+        <p class="fl-eyebrow">Свет софитов</p>
+        <h1 class="fl-title">Первая реплика</h1>
+      </header>
+
+      <section class="fl-tones" aria-labelledby="fl-tones-title">
+        <h2 id="fl-tones-title" class="visually-hidden">Фильтр по тону</h2>
+        <div id="toneFilter" class="fl-tones__row" role="group" aria-label="Тон реплики">
+          <!-- Кнопки тонов создаются в app.js из FIRST_LINE_TONES -->
+        </div>
+      </section>
+
+      <section class="fl-spot" aria-labelledby="fl-spot-title">
+        <h2 id="fl-spot-title" class="visually-hidden">Открывающая реплика</h2>
+
+        <div id="line" class="fl-line" data-state="idle">
+          <p id="lineText" class="fl-line__text">
+            Нажмите «Свет софитов», чтобы получить первую реплику
+          </p>
+          <p id="lineTone" class="fl-line__tone" hidden></p>
+        </div>
+
+        <p id="progress" class="fl-progress" aria-hidden="true"></p>
+        <p id="liveResult" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
+      </section>
+
+      <div class="fl-controls">
+        <button id="newButton" class="fl-primary" type="button">
+          <span class="fl-primary__glow" aria-hidden="true"></span>
+          <span class="fl-primary__text">Свет софитов</span>
+        </button>
+        <p class="fl-hint">Пробел или Enter — новая реплика</p>
+      </div>
+    </main>
+
+    <noscript>
+      <p class="noscript-message">Для генерации первой реплики нужен включённый JavaScript.</p>
+    </noscript>
+
+    <script src="./lines.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
