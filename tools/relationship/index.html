@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Генератор отношений между двумя персонажами для импровизационной сцены."
+    />
+    <title>Генератор отношений — инструменты для импровизации</title>
+    <link rel="stylesheet" href="../../shared/styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="bond-page">
+    <a class="tool-navigation" href="../../index.html">Все инструменты</a>
+
+    <main class="bond-shell">
+      <header class="bond-header">
+        <h1 class="bond-title">Кто вы друг другу</h1>
+      </header>
+
+      <section class="bond-stage" aria-labelledby="bond-stage-title">
+        <h2 id="bond-stage-title" class="visually-hidden">Отношения двух игроков</h2>
+
+        <div id="bond" class="bond" data-state="idle">
+          <div class="bond__link" aria-hidden="true">
+            <span class="bond__cord"></span>
+            <p id="bondLabel" class="bond__label">Нажмите, чтобы связать двоих</p>
+          </div>
+        </div>
+
+        <p id="liveResult" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
+      </section>
+
+      <div class="bond-controls">
+        <button id="newButton" class="bond-button" type="button">
+          <span class="bond-button__text">Новые отношения</span>
+        </button>
+
+        <button id="backButton" class="bond-back" type="button" disabled>
+          <span class="bond-back__mark" aria-hidden="true">↺</span>
+          <span class="bond-back__text">Вернуть предыдущие</span>
+        </button>
+      </div>
+
+      <p class="bond-hint">Пробел или Enter — новые отношения</p>
+    </main>
+
+    <noscript>
+      <p class="noscript-message">Для генерации отношений нужен включённый JavaScript.</p>
+    </noscript>
+
+    <script src="./relationships.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
