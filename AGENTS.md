@@ -34,3 +34,8 @@ Every page and interaction must work in both desktop and mobile browsers.
 Support pointer, keyboard, and touch input where applicable. Keep internal links
 and shared resource paths relative so the site works both through `file://` and
 on GitHub Pages.
+
+Interactive controls (buttons and other tap targets) must set
+`touch-action: manipulation` in CSS so a fast double tap fires the action twice
+instead of zooming the page in mobile browsers (notably iOS Safari). Apply it to
+every tappable element in each new tool.

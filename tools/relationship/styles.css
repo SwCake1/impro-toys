@@ -152,6 +152,8 @@
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
+  /* Убирает зум по двойному тапу в мобильных браузерах (iOS Safari). */
+  touch-action: manipulation;
   box-shadow:
     -0.3rem -0.3rem 0.7rem rgba(255, 255, 255, 0.5),
     0.4rem 0.5rem 1rem rgba(120, 55, 33, 0.42);
@@ -182,6 +184,8 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  /* Убирает зум по двойному тапу в мобильных браузерах (iOS Safari). */
+  touch-action: manipulation;
   box-shadow:
     -0.28rem -0.28rem 0.6rem var(--plaster-hi),
     0.32rem 0.36rem 0.8rem var(--plaster-lo);
