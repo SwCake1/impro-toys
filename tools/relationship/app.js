@@ -2,6 +2,7 @@
   const relationships = window.RELATIONSHIPS;
   const card = document.querySelector("#card");
   const bondLabel = document.querySelector("#bondLabel");
+  const deckCounter = document.querySelector("#deckCounter");
   const liveResult = document.querySelector("#liveResult");
   const newButton = document.querySelector("#newButton");
   const backButton = document.querySelector("#backButton");
@@ -11,6 +12,7 @@
     relationships.length === 0 ||
     !card ||
     !bondLabel ||
+    !deckCounter ||
     !liveResult ||
     !newButton ||
     !backButton
@@ -122,6 +124,13 @@
   function render(relationship) {
     card.dataset.state = "result";
     bondLabel.textContent = relationship.label;
+
+    // Позиция в текущем цикле: показанная карта уже вынута из колоды, поэтому
+    // «показано» = всего − осталось. Новый цикл перемешивает колоду, и счётчик
+    // сам возвращается к 1 из total.
+    const total = relationships.length;
+    const shown = total - deck.length;
+    deckCounter.textContent = `${shown} / ${total}`;
 
     // На экране остаётся только формулировка связи; роли по-прежнему
     // проговариваются вспомогательным технологиям.

@@ -84,6 +84,7 @@
 }
 
 .rel-card {
+  position: relative;
   display: grid;
   place-items: center;
   width: 100%;
@@ -95,6 +96,26 @@
   box-shadow:
     calc(-1 * var(--lift)) calc(-1 * var(--lift)) var(--blur) var(--plaster-hi),
     var(--lift) var(--lift) calc(var(--blur) * 1.4) var(--plaster-lo);
+}
+
+/* Счётчик прогресса по колоде: сколько отношений показано из общего числа. */
+.rel-counter {
+  position: absolute;
+  right: clamp(1rem, 4vw, 1.6rem);
+  bottom: clamp(0.85rem, 3.5vw, 1.4rem);
+  margin: 0;
+  color: var(--plaster-lo);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  /* Появляется только вместе с результатом, чтобы не мешать заставке. */
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.rel-card[data-state="result"] .rel-counter {
+  opacity: 1;
 }
 
 .rel-card__label {
