@@ -120,7 +120,6 @@
 }
 
 .fl-header,
-.fl-tones,
 .fl-spot,
 .fl-controls {
   position: relative;
@@ -151,51 +150,175 @@
   color: var(--fl-ink);
 }
 
-/* --- Фильтр тонов --------------------------------------------------------- */
+/* --- Кнопка настроек тем -------------------------------------------------- */
 
-.fl-tones__row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(0.4rem, 1.5vw, 0.7rem);
-  justify-content: center;
-}
-
-.fl-tone {
+.fl-settings-toggle {
   touch-action: manipulation;
-  min-height: 2.6rem;
-  padding: 0.55rem 1.05rem;
+  position: fixed;
+  top: clamp(1rem, 3vw, 1.5rem);
+  right: clamp(1rem, 3vw, 1.5rem);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
   border: 1px solid rgba(246, 239, 225, 0.22);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   color: var(--fl-ink-dim);
-  font: 600 0.9rem/1 system-ui, sans-serif;
   cursor: pointer;
-  transition:
-    color 180ms ease,
-    border-color 180ms ease,
-    background 180ms ease,
+  transition: color 180ms ease, border-color 180ms ease, background 180ms ease,
     transform 140ms ease;
 }
 
-.fl-tone:hover {
+.fl-settings-toggle__icon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.fl-settings-toggle:hover {
   border-color: rgba(255, 210, 122, 0.5);
   color: var(--fl-ink);
 }
 
-.fl-tone:focus-visible {
+.fl-settings-toggle:focus-visible {
   outline: 0.18rem solid var(--fl-accent);
   outline-offset: 0.2rem;
 }
 
-.fl-tone:active {
-  transform: scale(0.96);
+.fl-settings-toggle:active {
+  transform: scale(0.94);
 }
 
-.fl-tone[aria-pressed="true"] {
+.fl-settings-toggle[aria-expanded="true"] {
   border-color: var(--fl-accent);
   background: rgba(255, 210, 122, 0.16);
   color: var(--fl-ink);
-  box-shadow: 0 0 1.4rem rgba(255, 210, 122, 0.25);
+}
+
+/* --- Модальное окно настроек тем ------------------------------------------ */
+
+.fl-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.fl-modal[hidden] {
+  display: none;
+}
+
+.fl-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 6, 10, 0.72);
+}
+
+.fl-modal__panel {
+  position: relative;
+  width: min(100%, 26rem);
+  max-height: 85vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(246, 239, 225, 0.16);
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, var(--fl-stage-top) 0%, var(--fl-stage-bottom) 100%);
+  color: var(--fl-ink);
+  box-shadow: 0 1.5rem 3.5rem rgba(0, 0, 0, 0.5);
+  animation: fl-modal-in 220ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+@keyframes fl-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fl-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.fl-modal__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.fl-modal__close {
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid rgba(246, 239, 225, 0.22);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fl-ink-dim);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fl-modal__close:hover {
+  color: var(--fl-ink);
+  border-color: rgba(255, 210, 122, 0.5);
+}
+
+.fl-modal__close:focus-visible {
+  outline: 0.18rem solid var(--fl-accent);
+  outline-offset: 0.2rem;
+}
+
+.fl-modal__tones {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.fl-modal__tone {
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 0.6rem;
+  color: var(--fl-ink-dim);
+  font-size: 0.98rem;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.fl-modal__tone:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fl-ink);
+}
+
+.fl-modal__tone input {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--fl-accent);
+  cursor: pointer;
+}
+
+.fl-modal__hint {
+  margin: 0;
+  color: var(--fl-ink-faint);
+  font-size: 0.82rem;
 }
 
 /* --- Реплика в свете ------------------------------------------------------ */
@@ -371,6 +494,9 @@
   }
   .fl-beam {
     transition: background 520ms ease;
+  }
+  .fl-modal__panel {
+    animation: fl-fade-in 150ms ease;
   }
   @keyframes fl-fade-in {
     from {
