@@ -17,6 +17,11 @@ Give every tool its own distinct visual design, UX, and product ideas based on
 its specific purpose. When creating a new tool, do not use existing tools as a
 design or interaction template; develop an original concept for it instead.
 
+Every tool must include animation and sound. Key interactions and state changes
+should be animated, and meaningful actions should play sound. Design both to fit
+the tool's own concept rather than reusing another tool's effects, and keep them
+working on both desktop and mobile.
+
 ## Build, Test, and Development Commands
 
 There is no build step or package manager. Open the root `index.html` directly
