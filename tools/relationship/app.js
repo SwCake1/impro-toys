@@ -1,6 +1,6 @@
 (() => {
   const relationships = window.RELATIONSHIPS;
-  const bond = document.querySelector("#bond");
+  const card = document.querySelector("#card");
   const bondLabel = document.querySelector("#bondLabel");
   const liveResult = document.querySelector("#liveResult");
   const newButton = document.querySelector("#newButton");
@@ -9,7 +9,7 @@
   if (
     !Array.isArray(relationships) ||
     relationships.length === 0 ||
-    !bond ||
+    !card ||
     !bondLabel ||
     !liveResult ||
     !newButton ||
@@ -17,7 +17,7 @@
   ) {
     if (newButton) {
       newButton.disabled = true;
-      newButton.querySelector(".bond-button__text").textContent =
+      newButton.querySelector(".rel-primary__text").textContent =
         "Отношения не загрузились";
     }
     return;
@@ -64,7 +64,7 @@
   }
 
   function render(relationship) {
-    bond.dataset.state = "result";
+    card.dataset.state = "result";
     bondLabel.textContent = relationship.label;
 
     // На экране остаётся только формулировка связи; роли по-прежнему
@@ -76,15 +76,15 @@
         `${relationship.label}. Игрок 1 — ${relationship.a}, игрок 2 — ${relationship.b}.`;
     }
 
-    // Перезапуск анимации: класс снимается по таймеру, поэтому следующая
-    // генерация не ждёт окончания перестроения связи.
-    bond.classList.remove("is-rebuilding");
-    void bond.offsetWidth;
-    bond.classList.add("is-rebuilding");
+    // Перезапуск анимации проявления карточки: класс снимается по таймеру,
+    // поэтому следующая генерация не ждёт окончания перехода.
+    card.classList.remove("is-swapping");
+    void card.offsetWidth;
+    card.classList.add("is-swapping");
 
     clearTimeout(rebuildTimer);
     rebuildTimer = setTimeout(() => {
-      bond.classList.remove("is-rebuilding");
+      card.classList.remove("is-swapping");
     }, REBUILD_MS);
   }
 

@@ -1,30 +1,36 @@
 /*
-  Образ инструмента: два узла, соединённые живой нитью. Формулировка отношения
-  лежит на самой нити, поэтому связь, а не отдельный персонаж, читается как
-  главная структура страницы.
+  Образ инструмента: мягкий неоморфизм. Всё вылеплено из одного тёплого
+  «пластилина»: карточка выступает из поверхности, кнопки — тоже мягкие
+  формы того же материала. Главный жест — нажатие: основная кнопка при
+  нажатии вдавливается внутрь (тени переворачиваются), как мягкая игрушка.
+  Тёмный засечный текст и один тёплый акцент держат контраст, чтобы
+  оформление не расплылось в серую массу.
 */
 
-.bond-page {
-  --bond-ink: #1d2433;
-  --bond-paper: #eef1f7;
-  --bond-thread: #2f6f6b;
-  --bond-one: #2f6f6b;
-  --bond-two: #a8452f;
-  --bond-muted: #5d6577;
+.rel-page {
+  --plaster: #e9e6df;
+  --plaster-hi: #fbf9f4;
+  --plaster-lo: #cbc7bd;
+  --ink: #2a2724;
+  --ink-soft: #6f6a61;
+  --ember: #c8613f;
+  --ember-deep: #a94e30;
+
+  /* Расстояние и мягкость теней у неоморфных элементов. */
+  --lift: 0.5rem;
+  --blur: 1.1rem;
+
   box-sizing: border-box;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 18% 12%, rgba(47, 111, 107, 0.14) 0 12rem, transparent 26rem),
-    radial-gradient(circle at 82% 84%, rgba(168, 69, 47, 0.12) 0 12rem, transparent 26rem),
-    var(--bond-paper);
-  color: var(--bond-ink);
+  background: var(--plaster);
+  color: var(--ink);
   font-family: system-ui, sans-serif;
 }
 
-.bond-page *,
-.bond-page *::before,
-.bond-page *::after {
+.rel-page *,
+.rel-page *::before,
+.rel-page *::after {
   box-sizing: inherit;
 }
 
@@ -37,106 +43,88 @@
   white-space: nowrap;
 }
 
-.bond-shell {
+.rel-shell {
   display: grid;
-  gap: clamp(1.75rem, 5vw, 3rem);
-  width: min(100% - 2rem, 64rem);
+  gap: clamp(2rem, 6vw, 3.25rem);
+  width: min(100% - 2.5rem, 40rem);
   min-height: 100vh;
   margin-inline: auto;
-  padding: clamp(4.5rem, 12vw, 6rem) 0 clamp(2.5rem, 7vw, 4rem);
+  padding: clamp(5rem, 12vw, 7rem) 0 clamp(3rem, 8vw, 4.5rem);
   align-content: center;
   justify-items: center;
 }
 
-.bond-header {
+/* --- Заголовок ------------------------------------------------------------ */
+
+.rel-header {
   text-align: center;
 }
 
-.bond-title {
-  margin: 0;
-  color: var(--bond-muted);
-  font-size: clamp(0.72rem, 2.4vw, 0.85rem);
-  font-weight: 700;
-  letter-spacing: 0.22em;
+.rel-eyebrow {
+  margin: 0 0 0.6rem;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
 }
 
-.bond-stage {
-  width: 100%;
-}
-
-/* --- Связь --------------------------------------------------------------- */
-
-.bond {
-  display: grid;
-  justify-items: center;
-}
-
-.bond__link {
-  display: grid;
-  gap: clamp(0.9rem, 3.5vw, 1.5rem);
-  width: 100%;
-  justify-items: center;
-}
-
-/* Нить проходит под формулировкой и держит связь двух сторон:
-   её концы окрашены в цвета первого и второго игрока. */
-.bond__cord {
-  width: min(100%, 18rem);
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(to right, var(--bond-one), var(--bond-two));
-  transform-origin: 50% 50%;
-  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.bond__label {
+.rel-title {
   margin: 0;
-  max-width: 24rem;
-  font-size: clamp(1.35rem, 6vw, 2.4rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* --- Карточка отношения --------------------------------------------------- */
+
+.rel-stage {
+  width: 100%;
+}
+
+.rel-card {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: clamp(11rem, 34vw, 15rem);
+  padding: clamp(1.75rem, 6vw, 3rem);
+  border-radius: clamp(1.5rem, 5vw, 2.25rem);
+  background: var(--plaster);
+  /* Выпуклая форма: светлый блик сверху-слева, мягкая тень снизу-справа. */
+  box-shadow:
+    calc(-1 * var(--lift)) calc(-1 * var(--lift)) var(--blur) var(--plaster-hi),
+    var(--lift) var(--lift) calc(var(--blur) * 1.4) var(--plaster-lo);
+}
+
+.rel-card__label {
+  margin: 0;
+  max-width: 20ch;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.6rem, 7.5vw, 2.9rem);
+  font-weight: 400;
+  line-height: 1.12;
   text-align: center;
   text-wrap: balance;
 }
 
-.bond[data-state="idle"] .bond__label {
-  color: var(--bond-muted);
-  font-size: clamp(0.95rem, 3.4vw, 1.15rem);
-  font-weight: 500;
-  letter-spacing: 0;
+.rel-card[data-state="idle"] .rel-card__label {
+  max-width: 24ch;
+  color: var(--ink-soft);
+  font-family: system-ui, sans-serif;
+  font-size: clamp(1rem, 3.6vw, 1.2rem);
+  line-height: 1.4;
 }
 
-/* --- Перестроение связи --------------------------------------------------
-   Нить сжимается и отпускается, роли и формулировка проявляются следом.
-   Анимации оформительные: класс снимается по таймеру, а не по их окончанию,
-   поэтому следующая генерация доступна сразу. */
-
-.bond.is-rebuilding .bond__cord {
-  animation: bond-cord-pull 420ms cubic-bezier(0.22, 1, 0.36, 1);
+/* Проявление новой формулировки: лёгкий подъём и проступание. */
+.rel-card.is-swapping .rel-card__label {
+  animation: rel-settle 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.bond.is-rebuilding .bond__label {
-  animation: bond-settle 380ms cubic-bezier(0.22, 1, 0.36, 1) 60ms backwards;
-}
-
-@keyframes bond-cord-pull {
-  0% {
-    transform: scaleX(1);
-  }
-  45% {
-    transform: scaleX(0.3);
-  }
-  100% {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes bond-settle {
+@keyframes rel-settle {
   0% {
     opacity: 0;
-    transform: translateY(0.6rem) scale(0.96);
+    transform: translateY(0.5rem) scale(0.98);
   }
   100% {
     opacity: 1;
@@ -146,93 +134,110 @@
 
 /* --- Управление ----------------------------------------------------------- */
 
-.bond-controls {
+.rel-controls {
   display: grid;
-  gap: 0.85rem;
+  gap: 1.25rem;
   justify-items: center;
 }
 
-.bond-button {
-  padding: clamp(0.85rem, 3vw, 1.05rem) clamp(1.75rem, 7vw, 2.75rem);
+/* Основная кнопка — тёплый акцент, выступает из поверхности и вдавливается. */
+.rel-primary {
+  padding: clamp(0.9rem, 3vw, 1.1rem) clamp(2rem, 8vw, 3rem);
   border: 0;
   border-radius: 999px;
-  background: var(--bond-ink);
-  color: #f7f9fc;
+  background: var(--ember);
+  color: #fff7f2;
   font: inherit;
-  font-size: clamp(1rem, 3.4vw, 1.15rem);
-  font-weight: 700;
+  font-size: clamp(1rem, 3.6vw, 1.18rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
-  box-shadow: 0 0.6rem 1.4rem rgba(29, 36, 51, 0.22);
+  box-shadow:
+    -0.3rem -0.3rem 0.7rem rgba(255, 255, 255, 0.5),
+    0.4rem 0.5rem 1rem rgba(120, 55, 33, 0.42);
+  transition: transform 120ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
-.bond-button:active {
-  transform: translateY(0.1rem) scale(0.98);
-  box-shadow: 0 0.3rem 0.8rem rgba(29, 36, 51, 0.24);
+.rel-primary:active {
+  background: var(--ember-deep);
+  transform: translateY(0.05rem);
+  /* Нажатие: тени переворачиваются внутрь — кнопка вдавливается. */
+  box-shadow:
+    inset 0.3rem 0.3rem 0.7rem rgba(120, 55, 33, 0.5),
+    inset -0.25rem -0.25rem 0.6rem rgba(255, 255, 255, 0.28);
 }
 
-.bond-back {
+/* Возврат — вдавленный жёлоб в поверхности: подчёркивает «шаг назад». */
+.rel-undo {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   min-height: 2.75rem;
-  padding: 0.5rem 1.1rem;
-  border: 1px solid rgba(29, 36, 51, 0.22);
+  padding: 0.55rem 1.3rem;
+  border: 0;
   border-radius: 999px;
-  background: transparent;
-  color: var(--bond-muted);
+  background: var(--plaster);
+  color: var(--ink-soft);
   font: inherit;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
+  box-shadow:
+    inset 0.25rem 0.25rem 0.55rem var(--plaster-lo),
+    inset -0.25rem -0.25rem 0.55rem var(--plaster-hi);
+  transition: color 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
 }
 
-.bond-back__mark {
-  font-size: 1.1em;
-  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+.rel-undo__mark {
+  font-size: 1.15em;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.bond-back:disabled {
-  opacity: 0.4;
+/* Недоступный возврат «залегает» ещё глубже и глушится — состояние читается. */
+.rel-undo:disabled {
+  opacity: 0.55;
+  color: var(--plaster-lo);
   cursor: default;
+  box-shadow:
+    inset 0.15rem 0.15rem 0.4rem var(--plaster-lo),
+    inset -0.15rem -0.15rem 0.4rem var(--plaster-hi);
 }
 
-.bond-back:not(:disabled):active {
-  transform: scale(0.97);
+.rel-undo:not(:disabled):active {
+  color: var(--ember);
 }
 
-.bond-back:not(:disabled):active .bond-back__mark {
-  transform: rotate(-140deg);
+.rel-undo:not(:disabled):active .rel-undo__mark {
+  transform: rotate(-160deg);
 }
 
-.bond-button:focus-visible,
-.bond-back:focus-visible {
-  outline: 0.18rem solid var(--bond-thread);
-  outline-offset: 0.22rem;
+.rel-primary:focus-visible,
+.rel-undo:focus-visible {
+  outline: 0.18rem solid var(--ember-deep);
+  outline-offset: 0.3rem;
 }
 
 @media (hover: hover) {
-  .bond-button:hover {
-    background: #2b3547;
-    transform: translateY(-0.15rem);
-    box-shadow: 0 0.9rem 1.8rem rgba(29, 36, 51, 0.26);
+  .rel-primary:hover {
+    transform: translateY(-0.12rem);
+    box-shadow:
+      -0.35rem -0.35rem 0.8rem rgba(255, 255, 255, 0.55),
+      0.5rem 0.6rem 1.2rem rgba(120, 55, 33, 0.46);
   }
 
-  .bond-back:not(:disabled):hover {
-    border-color: var(--bond-thread);
-    color: var(--bond-thread);
+  .rel-undo:not(:disabled):hover {
+    color: var(--ember);
   }
 
-  .bond-back:not(:disabled):hover .bond-back__mark {
-    transform: rotate(-140deg);
+  .rel-undo:not(:disabled):hover .rel-undo__mark {
+    transform: rotate(-160deg);
   }
 }
 
-.bond-hint {
+.rel-hint {
   margin: 0;
-  color: var(--bond-muted);
-  font-size: 0.82rem;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
   text-align: center;
 }
 
@@ -241,18 +246,10 @@
   text-align: center;
 }
 
-/* --- Настольная раскладка: связь занимает больше места на широком экране --- */
-
-@media (min-width: 48rem) {
-  .bond__cord {
-    width: min(100%, 26rem);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .bond-page *,
-  .bond-page *::before,
-  .bond-page *::after {
+  .rel-page *,
+  .rel-page *::before,
+  .rel-page *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

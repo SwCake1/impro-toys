@@ -11,39 +11,37 @@
     <link rel="stylesheet" href="../../shared/styles.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body class="bond-page">
+  <body class="rel-page">
     <a class="tool-navigation" href="../../index.html">Все инструменты</a>
 
-    <main class="bond-shell">
-      <header class="bond-header">
-        <h1 class="bond-title">Кто вы друг другу</h1>
+    <main class="rel-shell">
+      <header class="rel-header">
+        <p class="rel-eyebrow">Между двумя персонажами</p>
+        <h1 class="rel-title">Кто вы друг другу</h1>
       </header>
 
-      <section class="bond-stage" aria-labelledby="bond-stage-title">
-        <h2 id="bond-stage-title" class="visually-hidden">Отношения двух игроков</h2>
+      <section class="rel-stage" aria-labelledby="rel-stage-title">
+        <h2 id="rel-stage-title" class="visually-hidden">Отношения двух игроков</h2>
 
-        <div id="bond" class="bond" data-state="idle">
-          <div class="bond__link" aria-hidden="true">
-            <span class="bond__cord"></span>
-            <p id="bondLabel" class="bond__label">Нажмите, чтобы связать двоих</p>
-          </div>
+        <div id="card" class="rel-card" data-state="idle">
+          <p id="bondLabel" class="rel-card__label">Нажмите кнопку, чтобы получить отношения</p>
         </div>
 
         <p id="liveResult" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
       </section>
 
-      <div class="bond-controls">
-        <button id="newButton" class="bond-button" type="button">
-          <span class="bond-button__text">Новые отношения</span>
+      <div class="rel-controls">
+        <button id="newButton" class="rel-primary" type="button">
+          <span class="rel-primary__text">Новые отношения</span>
         </button>
 
-        <button id="backButton" class="bond-back" type="button" disabled>
-          <span class="bond-back__mark" aria-hidden="true">↺</span>
-          <span class="bond-back__text">Вернуть предыдущие</span>
+        <button id="backButton" class="rel-undo" type="button" disabled>
+          <span class="rel-undo__mark" aria-hidden="true">↺</span>
+          <span class="rel-undo__text">Вернуть предыдущие</span>
         </button>
       </div>
 
-      <p class="bond-hint">Пробел или Enter — новые отношения</p>
+      <p class="rel-hint">Пробел или Enter — новые отношения</p>
     </main>
 
     <noscript>
