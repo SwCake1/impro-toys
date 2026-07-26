@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Генератор случайных русских букв без повторов с настройкой гласных и согласных."
+    />
+    <title>Буквы — инструменты для импровизации</title>
+    <link rel="stylesheet" href="../../shared/styles.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="letters-page">
+    <a class="tool-navigation" href="../../index.html">Все инструменты</a>
+
+    <button
+      class="letters-settings-button"
+      id="settingsButton"
+      type="button"
+      aria-label="Настройки букв"
+      aria-haspopup="dialog"
+      aria-controls="settingsDialog"
+    >
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M7 6.5h18M7 16h18M7 25.5h18" />
+        <circle cx="12" cy="6.5" r="2.75" />
+        <circle cx="21" cy="16" r="2.75" />
+        <circle cx="14.5" cy="25.5" r="2.75" />
+      </svg>
+    </button>
+
+    <main class="letters-workshop">
+      <header class="letters-header">
+        <p class="letters-kicker">Ручная словолитня</p>
+        <h1>Буквы</h1>
+        <p class="letters-intro">Один удар — одна новая литера.</p>
+      </header>
+
+      <section class="type-case" aria-labelledby="caseTitle">
+        <div class="type-case__topline">
+          <h2 id="caseTitle">Наборная касса</h2>
+          <p id="poolLabel">30 литер</p>
+        </div>
+
+        <div class="press" id="press" data-state="idle" aria-hidden="true">
+          <span class="press__rail press__rail--left"></span>
+          <span class="press__rail press__rail--right"></span>
+          <span class="press__carriage"></span>
+
+          <div class="type-block">
+            <span class="type-block__edge type-block__edge--top"></span>
+            <span class="type-block__edge type-block__edge--right"></span>
+            <div class="type-block__face">
+              <span class="type-block__ghost" id="letterGhost"></span>
+              <span class="type-block__letter" id="letterDisplay"></span>
+              <span class="type-block__prompt" id="letterPrompt">
+                <span>Нажмите</span>
+                <strong>«Новая буква»</strong>
+              </span>
+            </div>
+          </div>
+
+          <span class="press__paper-shadow"></span>
+          <span class="press__paper"></span>
+        </div>
+
+        <p class="letters-live visually-hidden" id="liveResult" aria-live="polite" aria-atomic="true"></p>
+
+        <div class="letters-controls">
+          <button class="letters-primary" id="generateButton" type="button">
+            <span class="letters-primary__plate" aria-hidden="true"></span>
+            <span class="letters-primary__label">Новая буква</span>
+            <span class="letters-primary__queue" id="queueCount" hidden aria-hidden="true"></span>
+          </button>
+          <p>Пробел или Enter</p>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="letters-settings" id="settingsDialog" aria-labelledby="settingsTitle">
+      <div class="letters-settings__drawer">
+        <header class="letters-settings__header">
+          <div>
+            <p>Ящик № 01</p>
+            <h2 id="settingsTitle">Состав кассы</h2>
+          </div>
+          <button class="letters-settings__close" id="settingsClose" type="button" aria-label="Закрыть настройки">
+            <span aria-hidden="true">×</span>
+          </button>
+        </header>
+
+        <fieldset class="letters-mode">
+          <legend>Какие буквы выдавать</legend>
+          <div class="letters-mode__grid">
+            <label>
+              <input type="radio" name="letterMode" value="all" checked />
+              <span class="letters-mode__cell">
+                <strong>Все</strong>
+                <small data-mode-count="all">30</small>
+              </span>
+            </label>
+            <label>
+              <input type="radio" name="letterMode" value="vowels" />
+              <span class="letters-mode__cell">
+                <strong>Гласные</strong>
+                <small data-mode-count="vowels">9</small>
+              </span>
+            </label>
+            <label>
+              <input type="radio" name="letterMode" value="consonants" />
+              <span class="letters-mode__cell">
+                <strong>Согласные</strong>
+                <small data-mode-count="consonants">21</small>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <label class="letters-special">
+          <span>
+            <strong>Скрывать Ы, Ъ и Ь</strong>
+            <small>Включено по умолчанию</small>
+          </span>
+          <input id="hideSpecial" type="checkbox" checked />
+          <span class="letters-special__switch" aria-hidden="true"></span>
+        </label>
+
+        <p class="letters-settings__note">Настройки сбросятся после перезагрузки страницы.</p>
+      </div>
+    </dialog>
+
+    <noscript>
+      <p class="letters-noscript">Для генерации букв нужен включённый JavaScript.</p>
+    </noscript>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

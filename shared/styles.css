@@ -602,6 +602,12 @@ html[data-icon-theme="classic"] .tool-card__icon {
   }
 }
 
+@media (min-width: 64rem) {
+  .tool-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .tool-navigation {
   --tool-nav-foreground: #2b2119;
   --tool-nav-background: rgba(255, 250, 239, 0.86);
