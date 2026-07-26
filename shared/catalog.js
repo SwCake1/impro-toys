@@ -2,11 +2,12 @@
   "use strict";
 
   const storageKey = "impro-toy.catalog.icon-theme";
-  const defaultTheme = "theatrical";
-  const allowedThemes = new Set(["classic", "theatrical"]);
+  const defaultTheme = "character";
+  const allowedThemes = new Set(["classic", "theatrical", "character"]);
   const themeLabels = {
     classic: "классические",
     theatrical: "театральные",
+    character: "В характере",
   };
 
   const root = document.documentElement;
@@ -50,7 +51,11 @@
 
   const applyTheme = (theme, { animate = false, persist = false } = {}) => {
     const nextTheme = allowedThemes.has(theme) ? theme : defaultTheme;
-    const dataKey = nextTheme === "classic" ? "iconClassic" : "iconTheatrical";
+    const dataKey = {
+      classic: "iconClassic",
+      theatrical: "iconTheatrical",
+      character: "iconCharacter",
+    }[nextTheme];
 
     root.dataset.iconTheme = nextTheme;
 
@@ -72,10 +77,10 @@
     if (persist) {
       const saved = storeTheme(nextTheme);
       status.textContent = saved
-        ? `Выбраны ${themeLabels[nextTheme]} иконки. Настройка сохранена.`
-        : `Выбраны ${themeLabels[nextTheme]} иконки. Хранилище браузера недоступно.`;
+        ? `Выбран набор «${themeLabels[nextTheme]}». Настройка сохранена.`
+        : `Выбран набор «${themeLabels[nextTheme]}». Хранилище браузера недоступно.`;
     } else {
-      status.textContent = `Сейчас выбраны ${themeLabels[nextTheme]} иконки. Выбор сохранится на этом устройстве.`;
+      status.textContent = `Сейчас выбран набор «${themeLabels[nextTheme]}». Выбор сохранится на этом устройстве.`;
     }
   };
 
