@@ -117,7 +117,23 @@
   function setVisualLetter(letter) {
     prompt.hidden = true;
     display.textContent = letter;
-    ghost.textContent = letter;
+    ghost.textContent = "";
+  }
+
+  function rollToLetter(letter, duration) {
+    prompt.hidden = true;
+    ghost.textContent = display.textContent;
+    display.textContent = letter;
+    press.style.setProperty("--tick-duration", `${duration}ms`);
+    press.classList.remove("is-ticking");
+    void press.offsetWidth;
+    press.classList.add("is-ticking");
+  }
+
+  function settleOnLetter(letter) {
+    ghost.textContent = display.textContent;
+    display.textContent = letter;
+    press.classList.remove("is-ticking");
   }
 
   function updateQueueBadge() {
@@ -165,7 +181,7 @@
       const now = context.currentTime;
       const output = context.createGain();
       output.gain.setValueAtTime(0.0001, now);
-      output.gain.exponentialRampToValueAtTime(0.075, now + 0.012);
+      output.gain.exponentialRampToValueAtTime(0.16, now + 0.012);
       output.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
       output.connect(context.destination);
 
@@ -202,16 +218,17 @@
     press.dataset.state = "cycling";
     prompt.hidden = true;
 
-    const previews = shuffle(activeLetters.filter((preview) => preview !== letter)).slice(0, 8);
+    const previews = shuffle(activeLetters.filter((preview) => preview !== letter)).slice(0, 9);
 
     for (let step = 0; step < previews.length; step += 1) {
       const preview = previews[step];
-      setVisualLetter(preview);
-      await wait(48 + step * 8);
+      const duration = 62 + Math.round(Math.pow(step / previews.length, 2) * 92);
+      rollToLetter(preview, duration);
+      await wait(duration);
     }
 
+    settleOnLetter(letter);
     press.dataset.state = "stamped";
-    setVisualLetter(letter);
     playRevealSound();
     liveResult.textContent = `Буква ${letter}`;
     await wait(310);
