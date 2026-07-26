@@ -104,14 +104,15 @@
 
 .tool-card__content {
   display: grid;
-  gap: clamp(0.65rem, 2vw, 1.1rem);
+  gap: clamp(0.55rem, 1.5vw, 0.85rem);
   justify-items: center;
-  padding: 1rem;
+  padding: 0.75rem;
 }
 
 .tool-card__icon {
-  width: clamp(3rem, 14vw, 6.5rem);
+  width: clamp(5rem, 24vw, 7.25rem);
   height: auto;
+  object-fit: contain;
   transform-origin: 50% 16%;
   transition: transform 220ms ease;
 }
