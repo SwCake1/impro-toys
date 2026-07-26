@@ -97,10 +97,10 @@
     const lastDigit = activeCount % 10;
     const lastTwoDigits = activeCount % 100;
     const noun = lastDigit === 1 && lastTwoDigits !== 11
-      ? "литера"
+      ? "буква"
       : lastDigit >= 2 && lastDigit <= 4 && (lastTwoDigits < 12 || lastTwoDigits > 14)
-        ? "литеры"
-        : "литер";
+        ? "буквы"
+        : "букв";
     poolLabel.textContent = `${activeCount} ${noun}`;
 
     modeCounts.forEach((count) => {
@@ -155,7 +155,7 @@
     }
   }
 
-  function playTypeStrike() {
+  function playRevealSound() {
     try {
       const context = getAudioContext();
       if (!context || context.state !== "running") {
@@ -163,39 +163,24 @@
       }
 
       const now = context.currentTime;
-      const duration = 0.11;
-      const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * duration), context.sampleRate);
-      const samples = buffer.getChannelData(0);
+      const output = context.createGain();
+      output.gain.setValueAtTime(0.0001, now);
+      output.gain.exponentialRampToValueAtTime(0.075, now + 0.012);
+      output.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+      output.connect(context.destination);
 
-      for (let index = 0; index < samples.length; index += 1) {
-        const envelope = Math.pow(1 - index / samples.length, 3.5);
-        samples[index] = (Math.random() * 2 - 1) * envelope;
-      }
-
-      const noise = context.createBufferSource();
-      const noiseFilter = context.createBiquadFilter();
-      const noiseGain = context.createGain();
-      noise.buffer = buffer;
-      noiseFilter.type = "bandpass";
-      noiseFilter.frequency.setValueAtTime(720, now);
-      noiseFilter.Q.setValueAtTime(0.75, now);
-      noiseGain.gain.setValueAtTime(0.12, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-      noise.connect(noiseFilter).connect(noiseGain).connect(context.destination);
-
-      const click = context.createOscillator();
-      const clickGain = context.createGain();
-      click.type = "triangle";
-      click.frequency.setValueAtTime(1850, now);
-      click.frequency.exponentialRampToValueAtTime(720, now + 0.055);
-      clickGain.gain.setValueAtTime(0.045, now);
-      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-      click.connect(clickGain).connect(context.destination);
-
-      noise.start(now);
-      noise.stop(now + duration);
-      click.start(now);
-      click.stop(now + 0.075);
+      [740, 1110].forEach((frequency, index) => {
+        const tone = context.createOscillator();
+        const toneGain = context.createGain();
+        tone.type = index === 0 ? "sine" : "triangle";
+        tone.frequency.setValueAtTime(frequency, now);
+        tone.frequency.exponentialRampToValueAtTime(frequency * 0.92, now + 0.16);
+        toneGain.gain.setValueAtTime(index === 0 ? 0.75 : 0.16, now);
+        toneGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.17);
+        tone.connect(toneGain).connect(output);
+        tone.start(now);
+        tone.stop(now + 0.18);
+      });
     } catch {
       // Звуковой отклик не должен мешать выдаче буквы.
     }
@@ -207,7 +192,7 @@
     if (reduceMotion.matches) {
       press.dataset.state = "stamped";
       setVisualLetter(letter);
-      playTypeStrike();
+      playRevealSound();
       liveResult.textContent = `Буква ${letter}`;
       await wait(150);
       press.dataset.state = "idle";
@@ -217,15 +202,17 @@
     press.dataset.state = "cycling";
     prompt.hidden = true;
 
-    for (let step = 0; step < 4; step += 1) {
-      const preview = activeLetters[Math.floor(Math.random() * activeLetters.length)];
+    const previews = shuffle(activeLetters.filter((preview) => preview !== letter)).slice(0, 8);
+
+    for (let step = 0; step < previews.length; step += 1) {
+      const preview = previews[step];
       setVisualLetter(preview);
-      await wait(42 + step * 7);
+      await wait(48 + step * 8);
     }
 
     press.dataset.state = "stamped";
     setVisualLetter(letter);
-    playTypeStrike();
+    playRevealSound();
     liveResult.textContent = `Буква ${letter}`;
     await wait(310);
     press.dataset.state = "idle";

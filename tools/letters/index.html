@@ -30,50 +30,33 @@
       </svg>
     </button>
 
-    <main class="letters-workshop">
+    <main class="letters-app">
       <header class="letters-header">
-        <p class="letters-kicker">Ручная словолитня</p>
         <h1>Буквы</h1>
-        <p class="letters-intro">Один удар — одна новая литера.</p>
+        <p class="letters-intro">Случайная буква без повторов</p>
       </header>
 
-      <section class="type-case" aria-labelledby="caseTitle">
-        <div class="type-case__topline">
-          <h2 id="caseTitle">Наборная касса</h2>
-          <p id="poolLabel">30 литер</p>
-        </div>
-
-        <div class="press" id="press" data-state="idle" aria-hidden="true">
-          <span class="press__rail press__rail--left"></span>
-          <span class="press__rail press__rail--right"></span>
-          <span class="press__carriage"></span>
-
-          <div class="type-block">
-            <span class="type-block__edge type-block__edge--top"></span>
-            <span class="type-block__edge type-block__edge--right"></span>
-            <div class="type-block__face">
-              <span class="type-block__ghost" id="letterGhost"></span>
-              <span class="type-block__letter" id="letterDisplay"></span>
-              <span class="type-block__prompt" id="letterPrompt">
-                <span>Нажмите</span>
-                <strong>«Новая буква»</strong>
-              </span>
-            </div>
+      <section class="letters-generator" aria-label="Генератор букв">
+        <div class="letters-stage" id="press" data-state="idle" aria-hidden="true">
+          <div class="letters-symbol">
+            <span class="letters-symbol__echo" id="letterGhost"></span>
+            <span class="letters-symbol__letter" id="letterDisplay"></span>
+            <span class="letters-symbol__prompt" id="letterPrompt">
+              <span>Нажмите</span>
+              <strong>«Новая буква»</strong>
+            </span>
           </div>
-
-          <span class="press__paper-shadow"></span>
-          <span class="press__paper"></span>
         </div>
 
         <p class="letters-live visually-hidden" id="liveResult" aria-live="polite" aria-atomic="true"></p>
 
         <div class="letters-controls">
+          <p class="letters-pool" id="poolLabel">30 букв</p>
           <button class="letters-primary" id="generateButton" type="button">
-            <span class="letters-primary__plate" aria-hidden="true"></span>
             <span class="letters-primary__label">Новая буква</span>
             <span class="letters-primary__queue" id="queueCount" hidden aria-hidden="true"></span>
           </button>
-          <p>Пробел или Enter</p>
+          <p class="letters-shortcut">Пробел или Enter</p>
         </div>
       </section>
     </main>
@@ -81,10 +64,7 @@
     <dialog class="letters-settings" id="settingsDialog" aria-labelledby="settingsTitle">
       <div class="letters-settings__drawer">
         <header class="letters-settings__header">
-          <div>
-            <p>Ящик № 01</p>
-            <h2 id="settingsTitle">Состав кассы</h2>
-          </div>
+          <h2 id="settingsTitle">Настройки</h2>
           <button class="letters-settings__close" id="settingsClose" type="button" aria-label="Закрыть настройки">
             <span aria-hidden="true">×</span>
           </button>
