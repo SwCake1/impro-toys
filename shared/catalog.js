@@ -1,8 +1,9 @@
 (() => {
   "use strict";
 
+  const settingsEnabled = false;
   const storageKey = "impro-toy.catalog.icon-theme";
-  const defaultTheme = "character";
+  const defaultTheme = "classic";
   const allowedThemes = new Set(["classic", "theatrical", "character"]);
   const themeLabels = {
     classic: "классические",
@@ -22,6 +23,8 @@
   if (!grid || !dialog || !openButton || !closeButton || !status || !icons.length) {
     return;
   }
+
+  openButton.hidden = !settingsEnabled;
 
   const readStoredTheme = () => {
     try {
@@ -93,7 +96,7 @@
     }
   };
 
-  applyTheme(readStoredTheme() ?? defaultTheme);
+  applyTheme(settingsEnabled ? readStoredTheme() ?? defaultTheme : defaultTheme);
 
   openButton.addEventListener("click", () => {
     if (typeof dialog.showModal === "function") {
@@ -124,7 +127,7 @@
 
   themeInputs.forEach((input) => {
     input.addEventListener("change", () => {
-      if (input.checked) {
+      if (settingsEnabled && input.checked) {
         applyTheme(input.value, { animate: true, persist: true });
       }
     });
