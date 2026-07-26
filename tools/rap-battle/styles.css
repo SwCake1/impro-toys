@@ -82,24 +82,6 @@ html {
   isolation: isolate;
 }
 
-.matchup::before {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: min(96vw, 70rem);
-  height: 0.14rem;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(238, 231, 215, 0.24) 18%,
-    rgba(238, 231, 215, 0.24) 82%,
-    transparent
-  );
-  content: "";
-  transform: translate(-50%, -50%);
-  z-index: -1;
-}
-
 .side {
   --entry-distance: 3rem;
   position: relative;
@@ -400,19 +382,6 @@ html {
   .matchup {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(8.5rem, auto) 3.6rem minmax(8.5rem, auto);
-  }
-
-  .matchup::before {
-    width: 0.14rem;
-    height: calc(100% + 1rem);
-    background: linear-gradient(
-      180deg,
-      transparent,
-      rgba(238, 231, 215, 0.24) 18%,
-      rgba(238, 231, 215, 0.24) 82%,
-      transparent
-    );
-    transform: translate(-50%, -50%);
   }
 
   .side {
