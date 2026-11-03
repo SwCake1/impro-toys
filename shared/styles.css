@@ -5,6 +5,11 @@
   --catalog-gold: #d49b47;
 }
 
+/* Disable double-tap zoom across pages and scrollable settings panels. */
+* {
+  touch-action: manipulation;
+}
+
 .catalog-page,
 .catalog-page * {
   box-sizing: border-box;

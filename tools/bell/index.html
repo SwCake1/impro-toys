@@ -149,6 +149,16 @@
     animation: fadeLabel 1.5s ease-out forwards;
   }
 
+  .audio-status {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--gold-light);
+    font: 0.8rem/1.4 system-ui, sans-serif;
+    pointer-events: none;
+  }
+
   @keyframes fadeLabel {
     0%   { opacity: 1; transform: translateY(0) scale(1); }
     30%  { opacity: 1; transform: translateY(-8px) scale(1.04); }
@@ -709,6 +719,8 @@
   <div class="sound-list" id="soundList"></div>
 </div>
 
+<div class="audio-status" id="audioStatus" role="status"></div>
+
 <script>
 // ── Audio helpers ──────────────────────────────────────────────────────────
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -716,15 +728,15 @@ const VOLUME_LEVELS = [1, 1.5, 2];
 let volumeIndex = 0;
 let ctx = null;
 let output = null;
-function getCtx() {
-  configureAudioSession();
+function getCtx(activate = true) {
+  if (activate) configureAudioSession();
   if (!ctx) {
-    ctx = new AudioCtx();
+    ctx = new AudioCtx({ latencyHint: 'interactive' });
     output = ctx.createGain();
     output.gain.value = VOLUME_LEVELS[volumeIndex];
     output.connect(ctx.destination);
   }
-  if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+  if (activate && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
     ctx.resume().catch(error => console.warn('Не удалось возобновить звук:', error));
   }
   return ctx;
@@ -845,12 +857,52 @@ function playSweep(options) {
 }
 
 const recordingPlayers = new Map();
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// Older iOS needs a media element to remain audible with the Ring/Silent switch on.
+const useRecordingBuffers = AudioCtx && location.protocol !== 'file:'
+  && (!isIOS || 'audioSession' in navigator);
+
+function createRecordingPlayer(recording, src) {
+  const audio = new Audio(src);
+  audio.preload = 'auto';
+  const player = { audio, busy: false };
+  audio.addEventListener('ended', () => {
+    audio.currentTime = 0;
+    player.busy = false;
+  });
+  recording.players.push(player);
+  return player;
+}
+
+function prepareRecordingFallback(recording, src) {
+  // Also works through file://, where fetching an ArrayBuffer is restricted.
+  createRecordingPlayer(recording, src);
+  createRecordingPlayer(recording, src);
+}
 
 function getRecording(src) {
   if (!recordingPlayers.has(src)) {
-    const audio = new Audio(src);
-    audio.preload = 'auto';
-    recordingPlayers.set(src, { audio });
+    const recording = { buffer: null, players: [], loading: Boolean(useRecordingBuffers) };
+    recordingPlayers.set(src, recording);
+    if (useRecordingBuffers) {
+      // Fetch and decode once on page load, never in the tap handler.
+      recording.ready = fetch(src)
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.arrayBuffer();
+        })
+        .then(data => getCtx(false).decodeAudioData(data))
+        .then(buffer => { recording.buffer = buffer; })
+        .catch(error => {
+          console.warn('Не удалось подготовить звук в памяти, используем аудиоплеер:', error);
+          prepareRecordingFallback(recording, src);
+        })
+        .finally(() => { recording.loading = false; });
+    } else {
+      prepareRecordingFallback(recording, src);
+      recording.ready = Promise.resolve();
+    }
   }
   return recordingPlayers.get(src);
 }
@@ -867,10 +919,25 @@ function configureAudioSession() {
 
 function playRecording(src) {
   const recording = getRecording(src);
+  if (recording.loading) return false;
   configureAudioSession();
-  recording.audio.pause();
-  recording.audio.currentTime = 0;
-  recording.audio.play().catch(error => console.warn('Не удалось воспроизвести запись:', error));
+  if (recording.buffer) {
+    const c = getCtx();
+    const source = c.createBufferSource();
+    source.buffer = recording.buffer;
+    source.connect(getOutput());
+    source.onended = () => source.disconnect();
+    source.start();
+  } else {
+    const player = recording.players.find(candidate => !candidate.busy)
+      || createRecordingPlayer(recording, src);
+    player.busy = true;
+    player.audio.play().catch(error => {
+      player.busy = false;
+      console.warn('Не удалось воспроизвести запись:', error);
+    });
+  }
+  return true;
 }
 
 const DESK_BELL_SRC = 'Assets/02-resonant-desk-bell-trimmed.mp3';
@@ -882,8 +949,9 @@ getRecording('Assets/Сосать.m4a');
 const SOUNDS = [
   {
     id:'desk_bell', name:'Настольный звонок', tag:'звонкий, с быстрым затуханием', label:'Дзынь!',
+    recording: DESK_BELL_SRC,
     play() {
-      playRecording(DESK_BELL_SRC);
+      return playRecording(DESK_BELL_SRC);
     }
   },
   {
@@ -1110,14 +1178,16 @@ const SOUNDS = [
   },
   {
     id:'borya', name:'Боря', tag:'радостный финал', label:'Дзынь-дзынь!',
+    recording: 'Assets/Динь.m4a',
     play() {
-      playRecording('Assets/Динь.m4a');
+      return playRecording(this.recording);
     }
   },
   {
     id:'egor', name:'Егор', tag:'эффектное появление', label:'Сосааать!',
+    recording: 'Assets/Сосать.m4a',
     play() {
-      playRecording('Assets/Сосать.m4a');
+      return playRecording(this.recording);
     }
   },
 ];
@@ -1174,7 +1244,7 @@ Object.values(PERSON_IMAGES).forEach(images => {
 let currentId = SOUNDS[0].id;
 let panelOpen = false;
 let labelTimeout = null;
-let screenRingEnabled = false;
+let screenRingEnabled = window.matchMedia('(pointer: coarse) and (hover: none)').matches;
 
 const bellBtn = document.getElementById('bellBtn');
 const labelEl = document.getElementById('label');
@@ -1189,6 +1259,17 @@ const volumeToggle = document.getElementById('volumeToggle');
 const volumeValue = document.getElementById('volumeValue');
 const screenRingToggle = document.getElementById('screenRingToggle');
 const screenRingValue = document.getElementById('screenRingValue');
+const audioStatus = document.getElementById('audioStatus');
+
+function updateSoundReadiness() {
+  const sound = SOUNDS.find(s => s.id === currentId) || SOUNDS[0];
+  const loading = Boolean(sound.recording && getRecording(sound.recording).loading);
+  bellBtn.disabled = loading;
+  bellBtn.setAttribute('aria-busy', String(loading));
+  audioStatus.textContent = loading ? 'Загружаем звук…' : '';
+}
+
+updateSoundReadiness();
 
 function cycleVolume() {
   volumeIndex = (volumeIndex + 1) % VOLUME_LEVELS.length;
@@ -1204,8 +1285,7 @@ function cycleVolume() {
 
 volumeToggle.addEventListener('click', cycleVolume);
 
-function toggleScreenRing() {
-  screenRingEnabled = !screenRingEnabled;
+function updateScreenRingToggle() {
   screenRingToggle.setAttribute('aria-pressed', String(screenRingEnabled));
   screenRingToggle.setAttribute(
     'aria-label',
@@ -1214,6 +1294,12 @@ function toggleScreenRing() {
   screenRingValue.textContent = screenRingEnabled ? 'Вкл.' : 'Выкл.';
 }
 
+function toggleScreenRing() {
+  screenRingEnabled = !screenRingEnabled;
+  updateScreenRingToggle();
+}
+
+updateScreenRingToggle();
 screenRingToggle.addEventListener('click', toggleScreenRing);
 
 // ── Build list ─────────────────────────────────────────────────────────────
@@ -1232,6 +1318,16 @@ SOUNDS.forEach(s => {
     </button>`;
   soundListEl.appendChild(item);
 
+  if (s.recording) {
+    const recording = getRecording(s.recording);
+    const preview = item.querySelector('.preview-btn');
+    preview.disabled = recording.loading;
+    recording.ready.then(() => {
+      preview.disabled = false;
+      updateSoundReadiness();
+    });
+  }
+
   item.addEventListener('click', e => {
     if (e.target.closest('.preview-btn')) return;
     selectSound(s.id);
@@ -1249,6 +1345,7 @@ function selectSound(id) {
     el.classList.toggle('active', el.dataset.id === id));
   const s = SOUNDS.find(x => x.id === id);
   if (s) labelEl.textContent = s.label;
+  updateSoundReadiness();
 }
 
 // ── Panel ──────────────────────────────────────────────────────────────────
@@ -1280,7 +1377,7 @@ document.addEventListener('click', e => {
 function ring() {
   if (panelOpen) { closePanel(); return; }
   const sound = SOUNDS.find(s => s.id === currentId) || SOUNDS[0];
-  sound.play();
+  if (sound.play() === false) return;
 
   bellBtn.classList.remove('ringing');
   void bellBtn.offsetWidth;
