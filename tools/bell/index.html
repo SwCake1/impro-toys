@@ -10,6 +10,8 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  body, button, a, .sound-item { touch-action: manipulation; }
+
   :root {
     --gold: #c9a84c;
     --gold-light: #f0d080;
@@ -715,13 +717,16 @@ let volumeIndex = 0;
 let ctx = null;
 let output = null;
 function getCtx() {
+  configureAudioSession();
   if (!ctx) {
     ctx = new AudioCtx();
     output = ctx.createGain();
     output.gain.value = VOLUME_LEVELS[volumeIndex];
     output.connect(ctx.destination);
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+    ctx.resume().catch(error => console.warn('Не удалось возобновить звук:', error));
+  }
   return ctx;
 }
 function getOutput() {
@@ -853,6 +858,7 @@ function getRecording(src) {
 function configureAudioSession() {
   if (!navigator.audioSession || navigator.audioSession.type === 'playback') return;
   try {
+    // Use media playback on iOS so the Ring/Silent switch does not mute the bell.
     navigator.audioSession.type = 'playback';
   } catch (error) {
     console.warn('Не удалось настроить аудиосессию:', error);
@@ -867,11 +873,19 @@ function playRecording(src) {
   recording.audio.play().catch(error => console.warn('Не удалось воспроизвести запись:', error));
 }
 
+const DESK_BELL_SRC = 'Assets/02-resonant-desk-bell-trimmed.mp3';
+getRecording(DESK_BELL_SRC);
 getRecording('Assets/Динь.m4a');
 getRecording('Assets/Сосать.m4a');
 
 // ── Sound definitions ──────────────────────────────────────────────────────
 const SOUNDS = [
+  {
+    id:'desk_bell', name:'Настольный звонок', tag:'звонкий, с быстрым затуханием', label:'Дзынь!',
+    play() {
+      playRecording(DESK_BELL_SRC);
+    }
+  },
   {
     id:'bell', name:'Колокольчик', tag:'классика', label:'Дзынь!',
     play() {
@@ -1157,7 +1171,7 @@ Object.values(PERSON_IMAGES).forEach(images => {
 });
 
 
-let currentId = 'bell';
+let currentId = SOUNDS[0].id;
 let panelOpen = false;
 let labelTimeout = null;
 let screenRingEnabled = false;
@@ -1300,8 +1314,6 @@ function ring() {
 }
 
 bellBtn.addEventListener('click', ring);
-bellBtn.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') ring(); });
-bellBtn.addEventListener('touchstart', e => { e.preventDefault(); ring(); }, { passive: false });
 
 // ── Cursor ─────────────────────────────────────────────────────────────────
 document.addEventListener('mousemove', e => {
